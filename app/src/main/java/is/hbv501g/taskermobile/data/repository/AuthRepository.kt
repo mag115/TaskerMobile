@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import `is`.hbv501g.taskermobile.data.api.AuthApiService
 import `is`.hbv501g.taskermobile.data.model.LoginRequest
 import `is`.hbv501g.taskermobile.data.model.SignupRequest
+import `is`.hbv501g.taskermobile.data.model.SignupResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -16,12 +17,17 @@ class AuthRepository(
 ) {
     private val authTokenKey = stringPreferencesKey("auth_token")
 
-    suspend fun login(email: String, password: String): Result<Unit> {
+    suspend fun login(email: String, password: String): Result<String> {
         return try {
             val response = authApiService.login(LoginRequest(email, password))
             if (response.isSuccessful) {
-                response.body()?.token?.let { saveAuthToken(it) }
-                Result.success(Unit)
+                val token = response.body()?.token
+                if (token != null) {
+                    saveAuthToken(token)
+                    Result.success(token)
+                } else {
+                    Result.failure(Exception("Empty token"))
+                }
             } else {
                 Result.failure(Exception("Login failed: ${response.code()}"))
             }
@@ -30,12 +36,17 @@ class AuthRepository(
         }
     }
 
-    suspend fun signup(email: String, password: String): Result<Unit> {
+    suspend fun signup(username: String, email: String, password: String): Result<SignupResponse> {
         return try {
-            val response = authApiService.signup(SignupRequest(email, password))
+            val response = authApiService.signup(SignupRequest(username, email, password))
             if (response.isSuccessful) {
-                response.body()?.token?.let { saveAuthToken(it) }
-                Result.success(Unit)
+                response.body()?.let { signupResponse ->
+                    // Optionally save the token if your response contains one:
+                    signupResponse.userId?.let { token ->
+                        saveAuthToken(token)
+                    }
+                    Result.success(signupResponse)
+                } ?: Result.failure(Exception("Empty signup response"))
             } else {
                 Result.failure(Exception("Signup failed: ${response.code()}"))
             }

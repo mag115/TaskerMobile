@@ -1,6 +1,9 @@
 package `is`.hbv501g.taskermobile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.core.DataStore
 import androidx.navigation.compose.NavHost
@@ -10,6 +13,8 @@ import androidx.navigation.compose.rememberNavController
 import `is`.hbv501g.taskermobile.data.api.RetrofitClient
 import `is`.hbv501g.taskermobile.data.dataStore
 import `is`.hbv501g.taskermobile.data.repository.AuthRepository
+import `is`.hbv501g.taskermobile.data.session.SessionManager
+import `is`.hbv501g.taskermobile.ui.screens.auth.HomeScreen
 import `is`.hbv501g.taskermobile.ui.screens.auth.LoginScreen
 import `is`.hbv501g.taskermobile.ui.screens.auth.SignupScreen
 import `is`.hbv501g.taskermobile.ui.screens.auth.WelcomeScreen
@@ -24,6 +29,8 @@ fun AppNavGraph() {
 
     // Create the repository with the DataStore instance and API service
     val authRepository = AuthRepository(dataStore, RetrofitClient.authApiService)
+    val sessionManager = SessionManager(context)
+
 
     NavHost(
         navController = navController,
@@ -34,13 +41,14 @@ fun AppNavGraph() {
         }
         composable("login") {
             // Pass repository to LoginScreen so that it can use a custom factory
-            LoginScreen(navController = navController, repository = authRepository)
+            LoginScreen(navController = navController, repository = authRepository, sessionManager)
         }
         composable("signup") {
-            SignupScreen(navController = navController, repository = authRepository)
+            SignupScreen(navController = navController)
         }
         composable("home") {
             // HomeScreen or other screen(s)
+            HomeScreen()
         }
     }
 }

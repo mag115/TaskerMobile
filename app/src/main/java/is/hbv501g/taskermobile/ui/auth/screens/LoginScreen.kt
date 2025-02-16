@@ -3,8 +3,6 @@ package `is`.hbv501g.taskermobile.ui.screens.auth
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,22 +12,25 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.lifecycle.viewmodel.compose.viewModel
+import `is`.hbv501g.taskermobile.controller.AuthController
 import `is`.hbv501g.taskermobile.data.repository.AuthRepository
-import `is`.hbv501g.taskermobile.ui.auth.viewmodel.AuthViewModel
-import `is`.hbv501g.taskermobile.ui.auth.viewmodel.AuthViewModelFactory
+import `is`.hbv501g.taskermobile.data.session.SessionManager
 import `is`.hbv501g.taskermobile.ui.shared.AppHeader
-import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavController, repository: AuthRepository) {
-    val viewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(repository))
+fun LoginScreen(
+    navController: NavController,
+    repository: AuthRepository,
+    sessionManager: SessionManager
+) {
     val context = LocalContext.current
+
+    val controller = remember { AuthController(repository, sessionManager) }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = { AppHeader(navController = navController) }
@@ -62,17 +63,16 @@ fun LoginScreen(navController: NavController, repository: AuthRepository) {
             Button(
                 onClick = {
                     loading = true
-                    coroutineScope.launch {
-                        viewModel.login(email, password) { success ->
-                            loading = false
-                            if (success) {
-                                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                                navController.navigate("home") {
-                                    popUpTo("login") { inclusive = true }
-                                }
-                            } else {
-                                errorMessage = "Login failed. Please check your credentials."
+                    controller.login(email, password) { success, message ->
+                        loading = false
+                        if (success) {
+                            // Ensure Toast runs on the UI thread
+                            Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                            navController.navigate("home") {
+                                popUpTo("login") { inclusive = true }
                             }
+                        } else {
+                            errorMessage = message ?: "Login failed. Please check your credentials."
                         }
                     }
                 },

@@ -13,14 +13,13 @@ import androidx.compose.material3.Surface
 import `is`.hbv501g.taskermobile.data.api.RetrofitClient
 import `is`.hbv501g.taskermobile.data.dataStore
 import `is`.hbv501g.taskermobile.data.repository.AuthRepository
+import `is`.hbv501g.taskermobile.data.session.SessionManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dataStore = applicationContext.dataStore
         RetrofitClient.checkBackendConnection()
         // Pass this instance to your repository:
-        val authRepository = AuthRepository(dataStore, RetrofitClient.authApiService)
         setContent {
             TaskerMobileTheme {
                 Surface(

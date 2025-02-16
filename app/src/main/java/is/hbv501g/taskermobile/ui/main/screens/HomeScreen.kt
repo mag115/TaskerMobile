@@ -14,13 +14,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-import `is`.hbv501g.taskermobile.ui.auth.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onLogout: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
 ) {
     Scaffold(
         topBar = {
