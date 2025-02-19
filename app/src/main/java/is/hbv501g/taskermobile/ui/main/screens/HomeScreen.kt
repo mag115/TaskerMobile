@@ -14,22 +14,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import `is`.hbv501g.taskermobile.data.session.SessionManager
+import `is`.hbv501g.taskermobile.ui.shared.AppHeader
+import `is`.hbv501g.taskermobile.ui.shared.BottomNavBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-) {
+fun HomeScreen(navController: NavController, sessionManager: SessionManager) {
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Tasker Home") },
-//                actions = {
-//                    IconButton(onClick = onLogout) {
-//                        Icon(Icons.Default.Logout, contentDescription = "Logout")
-//                    }
-//                }
-            )
-        }
+        topBar = { AppHeader(title = "Tasker Home", navController = navController, backButton = false, sessionManager)},
+        bottomBar = { BottomNavBar(navController) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -40,7 +34,6 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Welcome to your Task Manager!", style = MaterialTheme.typography.headlineSmall)
-            // Add your home screen content here
         }
     }
 }

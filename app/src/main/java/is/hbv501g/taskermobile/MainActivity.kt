@@ -10,33 +10,39 @@ import `is`.hbv501g.taskermobile.ui.theme.TaskerMobileTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import `is`.hbv501g.taskermobile.data.api.RetrofitClient
+import `is`.hbv501g.taskermobile.AuthNavGraph
 import `is`.hbv501g.taskermobile.data.dataStore
 import `is`.hbv501g.taskermobile.data.repository.AuthRepository
 import `is`.hbv501g.taskermobile.data.session.SessionManager
+import `is`.hbv501g.taskermobile.navigation.MainNavGraph
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        RetrofitClient.checkBackendConnection()
-        // Pass this instance to your repository:
+        val sessionManager = SessionManager(applicationContext)
+
+        sessionManager.validateToken
+        // Check if user is authenticated
+        val isAuthenticated = runBlocking { sessionManager.authState.first() }
+
         setContent {
             TaskerMobileTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavGraph()
+                    if (isAuthenticated) {
+                        MainNavGraph(sessionManager)
+                    } else {
+                        AuthNavGraph(sessionManager)
+                    }
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AppPreview() {
-    TaskerMobileTheme {
-        AppNavGraph()
     }
 }

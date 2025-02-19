@@ -1,9 +1,6 @@
 package `is`.hbv501g.taskermobile
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.core.DataStore
 import androidx.navigation.compose.NavHost
@@ -20,7 +17,7 @@ import `is`.hbv501g.taskermobile.ui.screens.auth.SignupScreen
 import `is`.hbv501g.taskermobile.ui.screens.auth.WelcomeScreen
 
 @Composable
-fun AppNavGraph() {
+fun AuthNavGraph(sessionManager: SessionManager) {
     val navController = rememberNavController()
     val context = LocalContext.current
 
@@ -28,8 +25,8 @@ fun AppNavGraph() {
     val dataStore: DataStore<Preferences> = context.dataStore
 
     // Create the repository with the DataStore instance and API service
-    val authRepository = AuthRepository(dataStore, RetrofitClient.authApiService)
-    val sessionManager = SessionManager(context)
+    val authRepository = AuthRepository(RetrofitClient.authApiService)
+//    val sessionManager = SessionManager(context)
 
 
     NavHost(
@@ -48,7 +45,7 @@ fun AppNavGraph() {
         }
         composable("home") {
             // HomeScreen or other screen(s)
-            HomeScreen()
+            HomeScreen(navController,  sessionManager)
         }
     }
 }

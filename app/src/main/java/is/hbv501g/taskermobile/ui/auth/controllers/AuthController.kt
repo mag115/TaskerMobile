@@ -21,11 +21,11 @@ class AuthController(
         coroutineScope.launch {
             val result = repository.login(email, password)
             result.fold(
-                onSuccess = { token ->
-                    Log.d("AuthController", "Login successful: $token")
-                    sessionManager.saveAuthToken(token) // Save token
+                onSuccess = { loginResponse ->
+                    Log.d("AuthController", "Login successful: $loginResponse")
+                    sessionManager.saveLoginDetails(token = loginResponse.token, expiresIn = loginResponse.expiresIn, userId = loginResponse.userId, username = loginResponse.username)
                     withContext(Dispatchers.Main) {
-                        onResult(true, null) // Switch back to UI thread
+                        onResult(true, null)
                     }
                 },
                 onFailure = { error ->
@@ -38,6 +38,7 @@ class AuthController(
         }
     }
 
+
     /**
      * Handle user signup
      */
@@ -46,25 +47,24 @@ class AuthController(
             val result = repository.signup(username, email, password)
             result.fold(
                 onSuccess = { signupResponse ->
-                    Log.d("AuthController", "Signup successful: ${signupResponse.message}")
-                    if (signupResponse.success) {
-                        // Optionally, if your signup response contains a token (here represented by userId), save it.
-                        signupResponse.userId?.let { token ->
-                            sessionManager.saveAuthToken(token)
-                        }
-                        sessionManager.saveUsername(username)
+                    Log.d("AuthController", "Signup successful: ${signupResponse.username}")
+
+                    sessionManager.saveLoginDetails(token = signupResponse.token, expiresIn = signupResponse.expiresIn, userId = signupResponse.userId, username = signupResponse.username)
+
+                    withContext(Dispatchers.Main) {
                         onResult(true, null)
-                    } else {
-                        onResult(false, signupResponse.message)
                     }
                 },
                 onFailure = { error ->
                     Log.e("AuthController", "Signup failed: ${error.message}", error)
-                    onResult(false, error.message ?: "Signup failed")
+                    withContext(Dispatchers.Main) {
+                        onResult(false, error.message ?: "Signup failed")
+                    }
                 }
             )
         }
     }
+
 
     /**
      * Handle logout

@@ -15,6 +15,7 @@ import androidx.navigation.NavController
 import `is`.hbv501g.taskermobile.controller.AuthController
 import `is`.hbv501g.taskermobile.data.repository.AuthRepository
 import `is`.hbv501g.taskermobile.data.session.SessionManager
+import `is`.hbv501g.taskermobile.ui.Routes
 import `is`.hbv501g.taskermobile.ui.shared.AppHeader
 
 @Composable
@@ -33,7 +34,7 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = { AppHeader(navController = navController) }
+        topBar = { AppHeader(navController = navController, sessionManager = sessionManager) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -68,7 +69,7 @@ fun LoginScreen(
                         if (success) {
                             // Ensure Toast runs on the UI thread
                             Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                            navController.navigate("home") {
+                            navController.navigate(Routes.HOME) {
                                 popUpTo("login") { inclusive = true }
                             }
                         } else {

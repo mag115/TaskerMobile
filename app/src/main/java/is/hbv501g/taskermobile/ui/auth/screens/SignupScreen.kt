@@ -17,6 +17,7 @@ import `is`.hbv501g.taskermobile.data.api.RetrofitClient
 import `is`.hbv501g.taskermobile.data.dataStore
 import `is`.hbv501g.taskermobile.data.repository.AuthRepository
 import `is`.hbv501g.taskermobile.data.session.SessionManager
+import `is`.hbv501g.taskermobile.ui.Routes
 import `is`.hbv501g.taskermobile.ui.shared.AppHeader
 import kotlinx.coroutines.launch
 
@@ -26,7 +27,7 @@ fun SignupScreen(navController: NavController) {
     // Get DataStore instance from our extension property
     val dataStore = context.dataStore
     // Create the repository and session manager
-    val repository = remember { AuthRepository(dataStore, RetrofitClient.authApiService) }
+    val repository = remember { AuthRepository(RetrofitClient.authApiService) }
     val sessionManager = remember { SessionManager(context) }
     // Create the controller with the repository and session manager
     val controller = remember { AuthController(repository, sessionManager) }
@@ -40,7 +41,7 @@ fun SignupScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
-        topBar = { AppHeader(navController = navController) }
+        topBar = { AppHeader(navController = navController, sessionManager = sessionManager) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -98,7 +99,7 @@ fun SignupScreen(navController: NavController) {
                             loading = false
                             if (success) {
                                 Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
-                                navController.navigate("home") {
+                                navController.navigate(Routes.HOME) {
                                     popUpTo("signup") { inclusive = true }
                                 }
                             } else {
