@@ -6,4 +6,5 @@ object Routes {
     const val SIGNUP = "signup"
     const val HOME = "home"
     const val CREATE_TASKS = "create-task"
+    const val PROJECTS = "projects"
 }

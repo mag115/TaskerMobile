@@ -2,13 +2,13 @@ package `is`.hbv501g.taskermobile.ui.shared
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
@@ -29,6 +29,7 @@ fun BottomNavBar(navController: NavController) {
     val items = listOf(
         BottomNavItem("Home", Icons.Default.Home, "home"),
         BottomNavItem("Tasks", Icons.Outlined.Add, "create-task"),
+        BottomNavItem("Projects", Icons.Default.MailOutline, "projects"),
         BottomNavItem("Settings", Icons.Default.Person, "Settings")
     )
 

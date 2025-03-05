@@ -34,7 +34,8 @@ fun CreateTask(
     navController: NavController,
     sessionManager: SessionManager,
 ) {
-    val controller = remember { TaskController( sessionManager) }
+    val context = LocalContext.current
+    val controller = remember { TaskController(context, sessionManager) }
     var title by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
     var deadline by rememberSaveable { mutableStateOf<LocalDateTime?>(null) }
@@ -46,7 +47,6 @@ fun CreateTask(
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var isLoading by rememberSaveable { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     // Default project ID value
@@ -119,7 +119,7 @@ fun CreateTask(
             OutlinedTextField(
                 value = effortPercentage.toString(),
                 onValueChange = { effortPercentage = it.toDoubleOrNull() ?: 0.0 },
-                label = { Text("Effort Percentage (%)") },
+                label = { Text("Effort Percentage") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -127,17 +127,12 @@ fun CreateTask(
             OutlinedTextField(
                 value = dependency,
                 onValueChange = { dependency = it },
-                label = { Text("Dependency (Optional)") },
+                label = { Text("Dependency") },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Create Task Button
             Button(
                 onClick = {
-                    if (title.isBlank()) {
-                        errorMessage = "Title is required"
-                        return@Button
-                    }
                     coroutineScope.launch {
                         isLoading = true
                         try {

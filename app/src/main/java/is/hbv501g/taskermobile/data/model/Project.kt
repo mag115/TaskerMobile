@@ -4,17 +4,22 @@ import com.google.gson.annotations.SerializedName
 import `is`.hbv501g.taskermobile.data.model.Task
 
 data class Project(
-    val id: Long?,
+    val id: Long? = null,
     val name: String,
     val description: String?,
-
+    
     @SerializedName("createdAt")
-    val createdAt: String?, // Use String if LocalDateTime parsing causes issues
+    val createdAt: String?, 
 
     @SerializedName("updatedAt")
     val updatedAt: String?,
 
+    @SerializedName("tasks")
     val tasks: List<Task> = emptyList(),
-//    val members: List<User> = emptyList(),
-//    val owner: User
+
+    @SerializedName("members")
+    val members: List<User> = emptyList(),
+
+    @SerializedName("owner")
+    val owner: User? = null
 )
