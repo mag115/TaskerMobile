@@ -21,6 +21,7 @@ class SessionManager(private val context: Context) {
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val USER_ID = longPreferencesKey("userId")
         private val EXPIRES_AT = longPreferencesKey("expires_at") // For expiration timestamp
+        private const val DEBUG = true // Toggle for logging
     }
 
     // Save full login response (token + expiration)
@@ -30,7 +31,7 @@ class SessionManager(private val context: Context) {
         userId: Long,
         username: String
     ) {
-        val expiresAt = System.currentTimeMillis() + expiresIn// Convert seconds to milliseconds
+        val expiresAt = System.currentTimeMillis() + expiresIn // Convert seconds to milliseconds
 
         context.dataStore.edit { preferences ->
             preferences[AUTH_TOKEN_KEY] = token
@@ -38,6 +39,8 @@ class SessionManager(private val context: Context) {
             preferences[USERNAME_KEY] = username
             preferences[EXPIRES_AT] = expiresAt // Store calculated expiration
         }
+
+        if (DEBUG) Log.d("SessionManager", "✅ Login saved: User $username, Expiry: $expiresAt")
     }
 
     // Check if token is expired
@@ -46,55 +49,36 @@ class SessionManager(private val context: Context) {
         return expiresAt == null || System.currentTimeMillis() > expiresAt
     }
 
-
-
-
+    // Flow to observe authentication state
     val authState: Flow<Boolean> = context.dataStore.data
         .map { preferences ->
             val token = preferences[AUTH_TOKEN_KEY]
             val expiresAt = preferences[EXPIRES_AT] ?: 0
             val currentTime = System.currentTimeMillis()
 
-            Log.d("SessionManager", "Token: $token")
-            Log.d("SessionManager", "Expires At (Millis): $expiresAt")
-            Log.d("SessionManager", "Current Time (Millis): $currentTime")
-            Log.d("SessionManager", "Time Until Expiry (Seconds): ${(expiresAt - currentTime) / 1000}")
-
-            // Check token validity
             val isValid = token != null && expiresAt > 0 && currentTime < expiresAt
 
-            Log.d("SessionManager", "Is Token Valid: $isValid")
-
-            if (!isValid) {
-                Log.d("SessionManager", "❌ Token is expired. Clearing session...")
-                clearSession() // Invalidate session if token is expired
+            if (DEBUG) {
+                Log.d("SessionManager", "Token: $token")
+                Log.d("SessionManager", "Expires At (Millis): $expiresAt")
+                Log.d("SessionManager", "Current Time (Millis): $currentTime")
+                Log.d("SessionManager", "Time Until Expiry (Seconds): ${(expiresAt - currentTime) / 1000}")
+                Log.d("SessionManager", "Is Token Valid: $isValid")
             }
 
             isValid
         }
 
-
-
-    val validateToken: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        val expiresAt = preferences[EXPIRES_AT]
-        val isValid = expiresAt != null && System.currentTimeMillis() < expiresAt
-
-        if (!isValid) {
-            clearSession() // Clear session if expired
-        }
-
-        isValid
-    }
-
-
-    // Individual getters (optional)
+    // Individual getters
     val authToken: Flow<String?> = context.dataStore.data.map { it[AUTH_TOKEN_KEY] }
     val username: Flow<String?> = context.dataStore.data.map { it[USERNAME_KEY] }
     val userId: Flow<Long?> = context.dataStore.data.map { it[USER_ID] }
 
+    // Clear all session data
     suspend fun clearSession() {
         context.dataStore.edit { preferences ->
-            preferences.clear() // Removes all keys
+            preferences.clear()
         }
+        if (DEBUG) Log.d("SessionManager", "❌ Session cleared")
     }
 }

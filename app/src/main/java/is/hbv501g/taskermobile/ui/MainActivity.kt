@@ -1,4 +1,4 @@
-package `is`.hbv501g.taskermobile
+package `is`.hbv501g.taskermobile.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

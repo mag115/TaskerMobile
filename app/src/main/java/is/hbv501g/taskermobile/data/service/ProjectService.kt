@@ -4,28 +4,32 @@ import `is`.hbv501g.taskermobile.data.model.Project
 import retrofit2.Response
 import retrofit2.http.*
 
-interface ProjectService {
+interface `ProjectService` {
+    // Fetch all projects
     @GET("/projects")
     suspend fun getAllProjects(): Response<List<Project>>
 
-    // @GET("users/{userId}/projects")
-    // suspend fun getUserProjects(@Path("userId") userId: Long): Response<List<Project>>
+    // Fetch a single project by ID
+    @GET("/projects/{projectId}")
+    suspend fun getProjectById(@Path("projectId") projectId: Long): Response<Project>
 
-    // @GET("users/{userId}/owned-projects")
-    // suspend fun getUserOwnedProjects(@Path("userId") userId: Long): Response<List<Project>>
+    // Create a new project
+    @POST("/projects")
+    suspend fun createProject(@Body project: Project): Response<Project>
 
-    // @GET("projects/{projectId}")
-    // suspend fun getProjectById(@Path("projectId") projectId: Long): Response<Project>
+    // Update an existing project
+    @PUT("/projects/{projectId}")
+    suspend fun updateProject(@Path("projectId") projectId: Long, @Body updatedProject: Project): Response<Project>
 
-    // @POST("projects")
-    // suspend fun createProject(@Body project: Project): Response<Project>
+    // Fetch the currently selected project
+    @GET("/projects/current")
+    suspend fun getCurrentProject(): Response<Project>
 
-    // @GET("projects/current")
-    // suspend fun getCurrentProject(): Response<Project>
+    // Set the current project
+    @POST("/projects/current")
+    suspend fun setCurrentProject(@Body body: Map<String, Long>): Response<Unit>
 
-    // @POST("projects/current")
-    // suspend fun setCurrentProject(@Body body: Map<String, Long>): Response<Unit>
-
-    // @POST("projects/{projectId}/members")
-    // suspend fun addMemberToProject(@Path("projectId") projectId: Long, @Body body: Map<String, Long>): Response<Project>
-} 
+    // Add a member to a project
+    @POST("/projects/{projectId}/members")
+    suspend fun addMemberToProject(@Path("projectId") projectId: Long, @Body body: Map<String, Long>): Response<Project>
+}

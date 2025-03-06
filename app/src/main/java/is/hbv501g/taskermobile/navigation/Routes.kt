@@ -1,4 +1,4 @@
-package `is`.hbv501g.taskermobile.ui
+package `is`.hbv501g.taskermobile.navigation
 
 object Routes {
     const val WELCOME = "welcome"

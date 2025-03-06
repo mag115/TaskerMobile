@@ -7,8 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.navigation.NavController
 import `is`.hbv501g.taskermobile.data.session.SessionManager
-import `is`.hbv501g.taskermobile.ui.Routes
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -11,26 +11,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import `is`.hbv501g.taskermobile.controller.AuthController
+import `is`.hbv501g.taskermobile.data.api.AuthApiService
 import `is`.hbv501g.taskermobile.data.api.RetrofitClient
-import `is`.hbv501g.taskermobile.data.dataStore
-import `is`.hbv501g.taskermobile.data.repository.AuthRepository
 import `is`.hbv501g.taskermobile.data.session.SessionManager
-import `is`.hbv501g.taskermobile.ui.Routes
+import `is`.hbv501g.taskermobile.navigation.Routes
 import `is`.hbv501g.taskermobile.ui.shared.AppHeader
-import kotlinx.coroutines.launch
+import `is`.hbv501g.taskermobile.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun SignupScreen(navController: NavController) {
+fun SignupScreen(navController: NavController, sessionManager: SessionManager) {
+    val authViewModel: AuthViewModel = viewModel {
+        AuthViewModel(RetrofitClient.createService(AuthApiService::class.java, sessionManager), sessionManager)
+    }
+
     val context = LocalContext.current
-    // Get DataStore instance from our extension property
-    val dataStore = context.dataStore
-    // Create the repository and session manager
-    val repository = remember { AuthRepository(RetrofitClient.authApiService) }
-    val sessionManager = remember { SessionManager(context) }
-    // Create the controller with the repository and session manager
-    val controller = remember { AuthController(repository, sessionManager) }
+    val coroutineScope = rememberCoroutineScope()
 
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -38,7 +36,6 @@ fun SignupScreen(navController: NavController) {
     var confirmPassword by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = { AppHeader(navController = navController, sessionManager = sessionManager) }
@@ -94,19 +91,7 @@ fun SignupScreen(navController: NavController) {
                         return@Button
                     }
                     loading = true
-                    coroutineScope.launch {
-                        controller.signup(username, email, password) { success, message ->
-                            loading = false
-                            if (success) {
-                                Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
-                                navController.navigate(Routes.HOME) {
-                                    popUpTo("signup") { inclusive = true }
-                                }
-                            } else {
-                                errorMessage = message ?: "Signup failed"
-                            }
-                        }
-                    }
+                    authViewModel.signup(username, email, password)
                 },
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth()
@@ -123,6 +108,25 @@ fun SignupScreen(navController: NavController) {
             if (errorMessage.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+
+    // Observe Signup State using `collectLatest()`
+    LaunchedEffect(authViewModel.loginState) {
+        authViewModel.loginState.collectLatest { state ->
+            state?.let {
+                it.fold(
+                    onSuccess = {
+                        Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
+                        navController.navigate(Routes.HOME) {
+                            popUpTo("signup") { inclusive = true }
+                        }
+                    },
+                    onFailure = { error ->
+                        errorMessage = error.message ?: "Signup failed"
+                    }
+                )
             }
         }
     }

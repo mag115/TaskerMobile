@@ -11,30 +11,34 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import `is`.hbv501g.taskermobile.controller.AuthController
-import `is`.hbv501g.taskermobile.data.repository.AuthRepository
+import `is`.hbv501g.taskermobile.data.api.AuthApiService
+import `is`.hbv501g.taskermobile.data.api.RetrofitClient
 import `is`.hbv501g.taskermobile.data.session.SessionManager
-import `is`.hbv501g.taskermobile.ui.Routes
+import `is`.hbv501g.taskermobile.navigation.Routes
 import `is`.hbv501g.taskermobile.ui.shared.AppHeader
+import `is`.hbv501g.taskermobile.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.flow.collectLatest
+
 
 @Composable
 fun LoginScreen(
     navController: NavController,
-    repository: AuthRepository,
-    sessionManager: SessionManager
+    authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current
-
-    val controller = remember { AuthController(repository, sessionManager) }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { AppHeader(navController = navController, sessionManager = sessionManager) }
+        topBar = { AppHeader(navController = navController, sessionManager = authViewModel.sessionManager) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -64,18 +68,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     loading = true
-                    controller.login(email, password) { success, message ->
-                        loading = false
-                        if (success) {
-                            // Ensure Toast runs on the UI thread
-                            Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                            navController.navigate(Routes.HOME) {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        } else {
-                            errorMessage = message ?: "Login failed. Please check your credentials."
-                        }
-                    }
+                    authViewModel.login(email, password)
                 },
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth()
@@ -86,10 +79,29 @@ fun LoginScreen(
                     Text("Login")
                 }
             }
-            if (errorMessage.isNotEmpty()) {
+
+            if (!errorMessage.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+                Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
             }
+        }
+    }
+
+    // Observe Login State and Navigate on Success
+    LaunchedEffect(loginState) {
+        loginState?.let {
+            it.fold(
+                onSuccess = {
+                    Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                },
+                onFailure = { error ->
+                    loading = false
+                    errorMessage = error.message ?: "Login failed"
+                }
+            )
         }
     }
 }

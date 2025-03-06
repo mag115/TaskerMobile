@@ -1,11 +1,11 @@
 package `is`.hbv501g.taskermobile.data.repository
 
 import `is`.hbv501g.taskermobile.data.model.Project
-import `is`.hbv501g.taskermobile.data.service.ProjectService
+import `is`.hbv501g.taskermobile.data.service.`ProjectService.kt`
 import retrofit2.HttpException
 
 class ProjectRepository(
-    private val projectService: ProjectService
+    private val projectService: `ProjectService.kt`
 ) {
     suspend fun getAllProjects(): Result<List<Project>> {
         return try {

@@ -11,8 +11,8 @@ import retrofit2.http.POST
 interface AuthApiService {
 
     @POST("/auth/login")
-    suspend fun login(@Body request: LoginRequest): Response<LoginResponse> // ✅ Ensure this return type
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse> // Ensure this return type
 
     @POST("/auth/signup")
-    suspend fun signup(@Body request: SignupRequest): Response<LoginResponse> // ✅ Ensure this return type
+    suspend fun signup(@Body request: SignupRequest): Response<LoginResponse> // Ensure this return type
 }

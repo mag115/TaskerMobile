@@ -28,7 +28,7 @@ data class TaskEntity(
     val isSynced: Boolean = false // To track if the task has been synced with the remote server
 ) {
     fun toTask(): Task = Task(
-        id = id,
+        id = if (id == 0L) null else id, // Prevent duplicate conflicts,
         title = title,
         description = description,
         deadline = deadline,
