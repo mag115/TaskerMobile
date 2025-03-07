@@ -1,0 +1,37 @@
+package com.taskermobile.data.local
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import com.taskermobile.data.local.dao.ProjectDao
+import com.taskermobile.data.local.dao.TaskDao
+import com.taskermobile.data.local.entity.ProjectEntity
+import com.taskermobile.data.local.entity.TaskEntity
+
+@Database(
+    entities = [ProjectEntity::class, TaskEntity::class],
+    version = 1,
+    exportSchema = false
+)
+abstract class TaskerDatabase : RoomDatabase() {
+    abstract fun projectDao(): ProjectDao
+    abstract fun taskDao(): TaskDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: TaskerDatabase? = null
+
+        fun getInstance(context: Context): TaskerDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    TaskerDatabase::class.java,
+                    "tasker_database"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+} 
