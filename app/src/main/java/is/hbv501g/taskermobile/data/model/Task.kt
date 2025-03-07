@@ -1,8 +1,5 @@
 package `is`.hbv501g.taskermobile.data.model
 
-import com.google.gson.annotations.SerializedName
-import java.util.*
-
 data class Task(
     val id: Long? = null,
     val title: String,

@@ -3,69 +3,65 @@ package `is`.hbv501g.taskermobile.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import `is`.hbv501g.taskermobile.data.model.Project
-import `is`.hbv501g.taskermobile.data.model.User
 import `is`.hbv501g.taskermobile.data.session.SessionManager
-import `is`.hbv501g.taskermobile.ui.controllers.ProjectController
-import `is`.hbv501g.taskermobile.ui.controllers.UserController
 import `is`.hbv501g.taskermobile.ui.shared.AppHeader
 import `is`.hbv501g.taskermobile.ui.shared.BottomNavBar
+import `is`.hbv501g.taskermobile.ui.shared.ProjectCard
+import `is`.hbv501g.taskermobile.ui.viewmodels.ProjectViewModel
+import `is`.hbv501g.taskermobile.ui.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectsScreen(
-    projectController: ProjectController,
-    userController: UserController,
-    navController: NavController? = null,
-    sessionManager: SessionManager? = null
+    navController: NavController,
+    sessionManager: SessionManager,
+    projectViewModel: ProjectViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel()
 ) {
-    val projects by projectController.projects.collectAsState()
-    val currentUser by userController.currentUser.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
+    // Observe projects and current user from the viewmodels
+    val projects by projectViewModel.projects.collectAsState()
+    val currentUser by userViewModel.currentUser.collectAsState()
 
+    // Load projects when the screen is first composed
     LaunchedEffect(Unit) {
-        projectController.loadAllProjects()
+        projectViewModel.loadAllProjects()
     }
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var newProjectName by remember { mutableStateOf("") }
     var newProjectDescription by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
-            if (navController != null && sessionManager != null) {
-                AppHeader(
-                    title = "Projects",
-                    navController = navController,
-                    backButton = false,
-                    sessionManager = sessionManager
-                )
-            }
+            AppHeader(
+                title = "Projects",
+                navController = navController,
+                backButton = false,
+                sessionManager = sessionManager
+            )
         },
-        bottomBar = {
-            if (navController != null) {
-                BottomNavBar(navController)
-            }
-        },
+        bottomBar = { BottomNavBar(navController) },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Project")
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
                 .padding(16.dp)
         ) {
             Text(
@@ -74,12 +70,16 @@ fun ProjectsScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(projects) { project ->
-                    ProjectCard(project = project)
+            if (projects.isEmpty()) {
+                Text("No projects available")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(projects) { project ->
+                        ProjectCard(project = project)
+                    }
                 }
             }
         }
@@ -112,6 +112,7 @@ fun ProjectsScreen(
                 Button(
                     onClick = {
                         if (newProjectName.isNotBlank() && currentUser != null) {
+                            // Create a new project using current user as owner
                             val newProject = Project(
                                 id = null,
                                 name = newProjectName,
@@ -123,8 +124,8 @@ fun ProjectsScreen(
                                 owner = currentUser
                             )
                             coroutineScope.launch {
-                                projectController.createProject(newProject)
-                                projectController.loadAllProjects()
+                                projectViewModel.createProject(newProject)
+                                projectViewModel.loadAllProjects() // Refresh the list
                             }
                             showCreateDialog = false
                             newProjectName = ""
@@ -143,37 +144,3 @@ fun ProjectsScreen(
         )
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProjectCard(project: Project) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        onClick = { /* TODO: Navigate to project details */ }
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = project.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-            project.description?.let { description ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Owner: ${project.owner?.username ?: "Unknown"}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-} 

@@ -1,7 +1,6 @@
 package `is`.hbv501g.taskermobile.data.model
 
 import com.google.gson.annotations.SerializedName
-import `is`.hbv501g.taskermobile.data.model.Task
 
 data class Project(
     val id: Long? = null,

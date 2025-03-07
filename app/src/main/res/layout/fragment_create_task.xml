@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/editText_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Title" />
+
+        <EditText
+            android:id="@+id/editText_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:layout_marginTop="8dp"/>
+
+        <EditText
+            android:id="@+id/editText_deadline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Deadline (ISO DateTime)"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinner_priority"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinner_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"/>
+
+        <EditText
+            android:id="@+id/editText_estimated_duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Estimated Duration (hours)"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="8dp"/>
+
+        <EditText
+            android:id="@+id/editText_effort_percentage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Effort Percentage"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="8dp"/>
+
+        <EditText
+            android:id="@+id/editText_dependency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Dependency"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/button_create_task"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Create Task"
+            android:layout_marginTop="16dp"/>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"/>
+    </LinearLayout>
+</ScrollView>
