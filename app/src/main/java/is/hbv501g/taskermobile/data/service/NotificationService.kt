@@ -12,10 +12,9 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import `is`.hbv501g.taskermobile.MainActivity
-import `is`.hbv501g.taskermobile.ui.fragments.HomeFragment  // if we want to navigate to home
 import `is`.hbv501g.taskermobile.R
 
-class MyFirebaseMessagingService : FirebaseMessagingService() {
+class NotificationService : FirebaseMessagingService() {
 
     companion object {
         const val TAG = "MyFirebaseMsgService"
