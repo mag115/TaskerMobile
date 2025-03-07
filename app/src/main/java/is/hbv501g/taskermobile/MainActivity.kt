@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import `is`.hbv501g.taskermobile.data.session.SessionManager
 import `is`.hbv501g.taskermobile.navigation.AppNavigation
 import `is`.hbv501g.taskermobile.ui.theme.TaskerMobileTheme
+import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,4 +23,5 @@ class MainActivity : AppCompatActivity() {
         sessionManager = SessionManager(applicationContext)
         setContentView(R.layout.activity_main)
     }
+
 }
