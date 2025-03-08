@@ -1,8 +1,8 @@
 package `is`.hbv501g.taskermobile.data.api
 
-import `is`.hbv501g.taskermobile.data.model.LoginRequest
-import `is`.hbv501g.taskermobile.data.model.LoginResponse
-import `is`.hbv501g.taskermobile.data.model.SignupRequest
+import com.taskermobile.data.model.LoginRequest
+import com.taskermobile.data.model.LoginResponse
+import com.taskermobile.data.model.SignupRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
