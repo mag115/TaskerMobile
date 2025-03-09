@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.taskermobile.R
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentTasksBinding
@@ -41,6 +42,7 @@ class TasksFragment : Fragment() {
         setupDependencies()
         setupRecyclerView()
         setupFab()
+        setupSwipeRefresh()
         observeProjectChanges()
     }
 
@@ -60,6 +62,24 @@ class TasksFragment : Fragment() {
     private fun setupFab() {
         binding.fabAddTask.setOnClickListener {
             findNavController().navigate(R.id.action_tasksFragment_to_createTaskFragment)
+        }
+    }
+
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setOnRefreshListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val projectId = sessionManager.currentProjectId.first()
+                    if (projectId != null) {
+                        taskController.syncTasks()
+                        taskController.refreshProjectTasks(projectId)
+                    }
+                } catch (e: Exception) {
+                    Log.e("TasksFragment", "Error syncing tasks: ${e.message}")
+                } finally {
+                    binding.swipeRefresh.isRefreshing = false
+                }
+            }
         }
     }
 

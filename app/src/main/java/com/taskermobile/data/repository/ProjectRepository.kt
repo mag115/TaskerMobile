@@ -24,7 +24,8 @@ class ProjectRepository(
             val response = projectService.getAllProjects()
             if (response.isSuccessful) {
                 response.body()?.let { projects ->
-                    projectDao.insertProjects(projects.map { it.toEntity() })
+                    val entities = projects.map { it.toEntity().copy(isSynced = true) }
+                    projectDao.insertProjects(entities)
                     Result.success(projects)
                 } ?: Result.failure(Exception("Response body is null"))
             } else {
@@ -40,14 +41,34 @@ class ProjectRepository(
             val response = projectService.createProject(project)
             if (response.isSuccessful) {
                 response.body()?.let { createdProject ->
-                    projectDao.insertProject(createdProject.toEntity())
+                    projectDao.insertProject(createdProject.toEntity().copy(isSynced = true))
                     Result.success(createdProject)
                 } ?: Result.failure(Exception("Response body is null"))
             } else {
+                projectDao.insertProject(project.toEntity().copy(isSynced = false))
                 Result.failure(HttpException(response))
             }
         } catch (e: Exception) {
+            projectDao.insertProject(project.toEntity().copy(isSynced = false))
             Result.failure(e)
+        }
+    }
+
+    suspend fun syncUnsyncedProjects() {
+        val unsyncedProjects = projectDao.getUnsyncedProjects()
+        for (projectEntity in unsyncedProjects) {
+            try {
+                val response = projectService.createProject(projectEntity.toDomain())
+                if (response.isSuccessful) {
+                    response.body()?.let { project ->
+                        projectEntity.id?.let { id ->
+                            projectDao.markProjectAsSynced(id)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Handle exception (retry later, notify user, etc.)
+            }
         }
     }
 } 

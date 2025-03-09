@@ -6,17 +6,20 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.taskermobile.data.local.dao.ProjectDao
 import com.taskermobile.data.local.dao.TaskDao
+import com.taskermobile.data.local.dao.UserDao
 import com.taskermobile.data.local.entity.ProjectEntity
 import com.taskermobile.data.local.entity.TaskEntity
+import com.taskermobile.data.local.entity.UserEntity
 
 @Database(
-    entities = [ProjectEntity::class, TaskEntity::class],
-    version = 2,
+    entities = [ProjectEntity::class, TaskEntity::class, UserEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class TaskerDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
     abstract fun taskDao(): TaskDao
+    abstract fun userDao(): UserDao
 
     companion object {
         @Volatile

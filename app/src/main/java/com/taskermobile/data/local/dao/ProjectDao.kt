@@ -20,4 +20,10 @@ interface ProjectDao {
 
     @Delete
     suspend fun deleteProject(project: ProjectEntity)
+
+    @Query("SELECT * FROM projects WHERE isSynced = 0")
+    suspend fun getUnsyncedProjects(): List<ProjectEntity>
+
+    @Query("UPDATE projects SET isSynced = 1 WHERE id = :projectId")
+    suspend fun markProjectAsSynced(projectId: Long?)
 } 

@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.taskermobile.TaskerApplication
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentProjectsBinding
@@ -16,6 +17,7 @@ import com.taskermobile.ui.main.controllers.ProjectController
 import com.taskermobile.ui.main.controllers.ProjectsState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class ProjectsFragment : Fragment() {
     private var _binding: FragmentProjectsBinding? = null
@@ -38,6 +40,7 @@ class ProjectsFragment : Fragment() {
         setupDependencies()
         setupRecyclerView()
         setupFab()
+        setupSwipeRefresh()
         loadProjects()
     }
 
@@ -58,6 +61,21 @@ class ProjectsFragment : Fragment() {
     private fun setupFab() {
         binding.fabAddProject.setOnClickListener {
             findNavController().navigate(ProjectsFragmentDirections.actionProjectsFragmentToCreateProject())
+        }
+    }
+
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setOnRefreshListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    projectController.syncUnsyncedProjects()
+                    projectController.fetchAllProjects()
+                } catch (e: Exception) {
+                    Log.e("ProjectsFragment", "Error syncing projects: ${e.message}")
+                } finally {
+                    binding.swipeRefresh.isRefreshing = false
+                }
+            }
         }
     }
 

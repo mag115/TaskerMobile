@@ -50,6 +50,10 @@ class ProjectController(
     suspend fun createProject(project: Project): Result<Project> {
         return projectRepository.createProject(project)
     }
+
+    suspend fun syncUnsyncedProjects() {
+        projectRepository.syncUnsyncedProjects()
+    }
 }
 
 sealed class ProjectsState {
