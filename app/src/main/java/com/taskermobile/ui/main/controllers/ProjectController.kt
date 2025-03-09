@@ -25,7 +25,6 @@ class ProjectController(
     private val controllerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     init {
-        // Observe local database changes
         controllerScope.launch {
             projectRepository.getLocalProjects()
                 .collect { projects ->

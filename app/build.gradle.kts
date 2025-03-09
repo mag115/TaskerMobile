@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.22-1.0.17" // Add this line
+    id("com.google.devtools.ksp") version "1.9.23-1.0.19"
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -71,6 +72,8 @@ dependencies {
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

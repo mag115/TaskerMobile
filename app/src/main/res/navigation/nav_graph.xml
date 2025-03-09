@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.taskermobile.ui.main.fragments.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/navigation_tasks"
+        android:name="com.taskermobile.ui.main.fragments.TasksFragment"
+        android:label="Tasks">
+        <action
+            android:id="@+id/action_tasksFragment_to_createTaskFragment"
+            app:destination="@id/createTaskFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_projects"
+        android:name="com.taskermobile.ui.main.fragments.ProjectsFragment"
+        android:label="Projects">
+        <action
+            android:id="@+id/actionProjectsFragmentToCreateProject"
+            app:destination="@id/createProjectFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.taskermobile.ui.main.fragments.UserFragment"
+        android:label="Users" />
+
+    <fragment
+        android:id="@+id/createProjectFragment"
+        android:name="com.taskermobile.ui.main.fragments.CreateProjectFragment"
+        android:label="Create Project" />
+
+    <fragment
+        android:id="@+id/createTaskFragment"
+        android:name="com.taskermobile.ui.main.fragments.CreateTaskFragment"
+        android:label="Create Task" />
+
+</navigation> 

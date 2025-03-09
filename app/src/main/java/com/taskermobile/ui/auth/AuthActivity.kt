@@ -8,7 +8,7 @@ import com.taskermobile.R
 import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
-import com.taskermobile.ui.MainActivity
+import com.taskermobile.MainActivity
 import com.taskermobile.ui.auth.controllers.AuthController
 import com.taskermobile.ui.auth.fragments.WelcomeFragment
 import kotlinx.coroutines.flow.first

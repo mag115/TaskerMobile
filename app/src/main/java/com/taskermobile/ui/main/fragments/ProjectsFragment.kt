@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.taskermobile.TaskerApplication
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentProjectsBinding
@@ -36,6 +37,7 @@ class ProjectsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupDependencies()
         setupRecyclerView()
+        setupFab()
         loadProjects()
     }
 
@@ -50,6 +52,12 @@ class ProjectsFragment : Fragment() {
         binding.projectsRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = projectAdapter
+        }
+    }
+
+    private fun setupFab() {
+        binding.fabAddProject.setOnClickListener {
+            findNavController().navigate(ProjectsFragmentDirections.actionProjectsFragmentToCreateProject())
         }
     }
 

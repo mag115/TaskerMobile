@@ -1,21 +1,41 @@
 package com.taskermobile.data.repository
 
 import com.taskermobile.data.local.dao.TaskDao
+import com.taskermobile.data.local.dao.ProjectDao
 import com.taskermobile.data.local.entity.TaskEntity
+import com.taskermobile.data.local.entity.ProjectEntity
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.service.TaskService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import retrofit2.HttpException
+import android.util.Log
 
 class TaskRepository(
     private val taskDao: TaskDao,
-    private val taskService: TaskService
+    private val taskService: TaskService,
+    private val projectDao: ProjectDao
 ) {
-    // Local operations
     fun getAllTasks(): Flow<List<Task>> {
-        return taskDao.getAllTasks().map { entities ->
-            entities.map { it.toTask() }
+        return taskDao.getAllTasks()
+            .map { entities -> entities.map { it.toTask() } }
+            .onStart { refreshTasks() }
+    }
+
+    private suspend fun refreshTasks() {
+        try {
+            // Fetch from remote
+            val response = taskService.getAllTasks(0) // 0 means all tasks
+            if (response.isSuccessful) {
+                response.body()?.let { tasks ->
+                    // Convert to entities and mark as synced
+                    val entities = tasks.map { TaskEntity.fromTask(it).copy(isSynced = true) }
+                    taskDao.insertTasks(entities)
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore network errors - we'll just use local data
         }
     }
 
@@ -39,15 +59,88 @@ class TaskRepository(
     }
 
     fun getTasksByProject(projectId: Long): Flow<List<Task>> {
-        return taskDao.getTasksByProject(projectId).map { entities ->
-            entities.map { it.toTask() }
+        Log.d("TaskRepository", "Setting up flow for project ID: $projectId")
+        return taskDao.getAssignedTasks(projectId)
+            .map { entities -> 
+                Log.d("TaskRepository", "Mapping ${entities.size} entities from database")
+                entities.forEach { entity ->
+                    Log.d("TaskRepository", "Entity in DB - ID: ${entity.id}, Title: ${entity.title}, ProjectId: ${entity.projectId}")
+                }
+                entities.map { it.toTask() }
+            }
+            .onStart { 
+                try {
+                    Log.d("TaskRepository", "Starting flow, fetching from API for project: $projectId")
+                    val response = taskService.getAllTasks(projectId)
+                    Log.d("TaskRepository", "Response: ${response.body()}")
+                    if (response.isSuccessful) {
+                        response.body()?.let { tasks ->
+                            Log.d("TaskRepository", "Received ${tasks.size} tasks from API")
+                            
+                            // Filter tasks that belong to the requested project
+                            val filteredTasks = tasks.filter { task -> 
+                                val taskProjectId = task.project?.id ?: task.projectId
+                                taskProjectId == projectId
+                            }
+
+                            if (filteredTasks.isEmpty()) {
+                                Log.d("TaskRepository", "No tasks found for project $projectId")   
+                            }
+
+                            // Convert to entities and save
+                            val entities = filteredTasks.map { task ->
+                                TaskEntity.fromTask(task.copy(projectId = projectId)).copy(isSynced = true)
+                            }
+                            
+                            if (entities.isNotEmpty()) {
+                                taskDao.insertTasks(entities)
+                                Log.d("TaskRepository", "Updated local database with ${entities.size} tasks")
+                                entities.forEach { entity ->
+                                    Log.d("TaskRepository", "Saved Entity - ID: ${entity.id}, Title: ${entity.title}, ProjectId: ${entity.projectId}")
+                                }
+                            }
+                        }
+                    } else {
+                        Log.d("TaskRepository", "Failed to fetch tasks: ${response.code()} - Using cached data")
+                    }
+                } catch (e: Exception) {
+                    when (e) {
+                        is kotlinx.coroutines.CancellationException -> {
+                            Log.d("TaskRepository", "Task fetch cancelled - Using cached data")
+                            throw e // Rethrow cancellation to properly cancel the coroutine
+                        }
+                        else -> {
+                            Log.d("TaskRepository", "Error fetching tasks from API - Using cached data", e)
+                        }
+                    }
+                }
+            }
+    }
+
+    suspend fun refreshProjectTasks(projectId: Long) {
+        try {
+            Log.d("TaskRepository", "Fetching tasks from API for project: $projectId")
+            val response = taskService.getAllTasks(projectId)
+            if (response.isSuccessful) {
+                Log.d("TaskRepository", "API call successful. Response code: ${response.code()}")
+                response.body()?.let { tasks ->
+                    Log.d("TaskRepository", "Received ${tasks.size} tasks from API")
+                    val entities = tasks.map { TaskEntity.fromTask(it).copy(isSynced = true) }
+                    taskDao.insertTasks(entities)
+                    Log.d("TaskRepository", "Saved tasks to local database")
+                } ?: Log.e("TaskRepository", "Response body was null")
+            } else {
+                Log.e("TaskRepository", "API call failed. Response code: ${response.code()}, Error: ${response.errorBody()?.string()}")
+            }
+        } catch (e: Exception) {
+            Log.e("TaskRepository", "Error fetching tasks from API", e)
+            // Ignore network errors - we'll just use local data
         }
     }
 
     fun getTasksByUser(userId: Long): Flow<List<Task>> {
-        return taskDao.getTasksByUser(userId).map { entities ->
-            entities.map { it.toTask() }
-        }
+        return taskDao.getTasksByUser(userId)
+            .map { entities -> entities.map { it.toTask() } }
     }
 
     // Remote operations with local caching

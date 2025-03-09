@@ -99,9 +99,20 @@ class CreateTaskFragment : Fragment() {
                 priority = binding.prioritySpinner.selectedItem.toString(),
                 status = binding.statusSpinner.selectedItem.toString(),
                 estimatedDuration = binding.durationInput.text.toString().toDoubleOrNull() ?: 0.0,
-                effortPercentage = binding.effortInput.text.toString().toFloatOrNull() ?: 0f,
-                dependency = binding.dependencyInput.text.toString(),
-                projectId = 1L // Default project ID
+                effortPercentage = binding.effortInput.text.toString().toDoubleOrNull() ?: 0.0,
+                dependency = binding.dependencyInput.text.toString().toLongOrNull(),
+                projectId = 1L, // Default project ID
+                reminderSent = false,
+                estimatedWeeks = null,
+                progressStatus = null,
+                progress = null,
+                manualProgress = null,
+                isDeleted = false,
+                project = null,
+                assignedUser = null,
+                timeSpent = 0.0,
+                elapsedTime = 0.0,
+                scheduledProgress = null
             )
 
             lifecycleScope.launch {

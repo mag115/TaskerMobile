@@ -11,7 +11,7 @@ import com.taskermobile.data.local.entity.TaskEntity
 
 @Database(
     entities = [ProjectEntity::class, TaskEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class TaskerDatabase : RoomDatabase() {
@@ -22,13 +22,15 @@ abstract class TaskerDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: TaskerDatabase? = null
 
-        fun getInstance(context: Context): TaskerDatabase {
+        fun getDatabase(context: Context): TaskerDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     TaskerDatabase::class.java,
                     "tasker_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()  // This will drop and recreate tables if schema changes
+                .build()
                 INSTANCE = instance
                 instance
             }

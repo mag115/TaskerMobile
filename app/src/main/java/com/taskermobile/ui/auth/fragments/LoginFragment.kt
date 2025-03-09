@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.taskermobile.R
 import com.taskermobile.databinding.FragmentLoginBinding
-import com.taskermobile.ui.MainActivity
+import com.taskermobile.MainActivity
 import com.taskermobile.ui.auth.AuthActivity
 import com.taskermobile.ui.auth.controllers.AuthController
 

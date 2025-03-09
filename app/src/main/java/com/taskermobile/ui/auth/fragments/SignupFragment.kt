@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.taskermobile.R
 import com.taskermobile.databinding.FragmentSignupBinding
-import com.taskermobile.ui.MainActivity
+import com.taskermobile.MainActivity
 import com.taskermobile.ui.auth.AuthActivity
 import com.taskermobile.ui.auth.controllers.AuthController
 import kotlinx.coroutines.launch

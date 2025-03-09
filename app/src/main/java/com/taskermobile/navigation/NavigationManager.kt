@@ -2,7 +2,7 @@ package com.taskermobile.navigation
 
 import android.content.Context
 import android.content.Intent
-import com.taskermobile.ui.MainActivity
+import com.taskermobile.MainActivity
 import com.taskermobile.ui.auth.AuthActivity
 
 class NavigationManager {

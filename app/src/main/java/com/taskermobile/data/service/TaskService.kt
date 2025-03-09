@@ -1,6 +1,5 @@
 package com.taskermobile.data.service
 
-import androidx.room.Query
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.model.TaskResponse
 import okhttp3.OkHttpClient
@@ -9,12 +8,20 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface TaskService {
-    @POST("tasks")
+    @POST("/tasks")
     suspend fun createTask(
         @Body task: Task,
     ): Response<TaskResponse<Task>>
 
+    @GET("/tasks")
+    suspend fun getAllTasks(@Query("project_id") projectId: Long): Response<List<Task>>
+
+    @GET("/assigned")
+    suspend fun getAssignedTasks(@Query("project_id") projectId: Long): Response<List<Task>>
+    
 }
