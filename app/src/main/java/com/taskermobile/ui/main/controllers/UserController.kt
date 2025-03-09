@@ -5,11 +5,14 @@ import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.model.User
 import com.taskermobile.data.service.UserService
 import com.taskermobile.data.session.SessionManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class UserController(private val sessionManager: SessionManager) {
@@ -69,6 +72,38 @@ class UserController(private val sessionManager: SessionManager) {
                 println("Exception during user fetch: ${e.message}")
                 e.printStackTrace()
             }
+        }
+    }
+
+    /**
+     * Sends the latest FCM token to the backend.
+     * This should be called after login or whenever the FCM token changes.
+     */
+    fun sendFcmTokenToBackend(userId: Long) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val token = sessionManager.getFcmToken()
+            if (token.isNullOrBlank()) {
+                return@launch
+            }
+
+            try {
+                val response = userService.updateFcmToken(userId, token)
+                if (response.isSuccessful) {
+                    Log.d("UserController", "✅ FCM token sent to backend")
+                }
+            } catch (e: Exception) {
+                Log.e("UserController", "❌ Failed to send FCM token", e)
+            }
+        }
+    }
+
+    /**
+     * Refresh FCM token and send it to the backend if needed.
+     * This should be triggered on app launch or when the token refreshes.
+     */
+    fun refreshAndSendFcmToken(userId: Long) {
+        sessionManager.refreshFcmToken { newToken ->
+            sendFcmTokenToBackend(userId)
         }
     }
 }

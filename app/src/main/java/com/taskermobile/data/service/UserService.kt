@@ -15,4 +15,9 @@ interface UserService {
     @GET("users")
     suspend fun getAllUsers(): Response<List<User>>
 
+    @POST("users/{id}/update-fcm-token")
+    suspend fun updateFcmToken(
+        @Path("id") userId: Long,
+        @Body fcmToken: String
+    ): Response<Unit>
 }

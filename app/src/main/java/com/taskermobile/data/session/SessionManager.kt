@@ -8,9 +8,14 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 
@@ -23,6 +28,7 @@ class SessionManager(private val context: Context) {
         private val AUTH_TOKEN_KEY = stringPreferencesKey("auth_token")
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val EXPIRES_AT = longPreferencesKey("expires_at") // For expiration timestamp
+        private val FCM_TOKEN_KEY = stringPreferencesKey("fcm_token")
     }
 
     val token: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -125,6 +131,30 @@ class SessionManager(private val context: Context) {
     suspend fun clearSession() {
         context.dataStore.edit { preferences ->
             preferences.clear()
+        }
+    }
+
+    // **New: Save FCM Token**
+    suspend fun saveFcmToken(token: String) {
+        context.dataStore.edit { preferences ->
+            preferences[FCM_TOKEN_KEY] = token
+        }
+    }
+
+    suspend fun getFcmToken(): String? {
+        return context.dataStore.data.first()[FCM_TOKEN_KEY]
+    }
+
+    fun refreshFcmToken(onTokenRefreshed: (String) -> Unit) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                task.result?.let { newToken ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        saveFcmToken(newToken)
+                        onTokenRefreshed(newToken)
+                    }
+                }
+            }
         }
     }
 }
