@@ -110,8 +110,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.1")
     implementation("androidx.activity:activity-ktx:1.9.0")
 
+<<<<<<< Updated upstream
     //Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging:23.2.1")
+=======
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging:23.3.1")
+>>>>>>> Stashed changes
 }

@@ -1,6 +1,7 @@
 package com.taskermobile
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -9,13 +10,15 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.taskermobile.data.model.Project
+import com.google.android.gms.tasks.Task
+import com.google.firebase.messaging.FirebaseMessaging
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
 import com.taskermobile.ui.main.controllers.ProjectController
 import com.taskermobile.ui.main.controllers.ProjectsState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -32,6 +35,17 @@ class MainActivity : AppCompatActivity() {
         setupDependencies()
         setupNavigation()
         setupProjectSelector()
+
+
+        // Subscribe to a Firebase topic
+        FirebaseMessaging.getInstance().subscribeToTopic("tasker_notifications")
+            .addOnCompleteListener { task: Task<Void?> ->
+                if (!task.isSuccessful) {
+                    Log.w("FCM", "Subscription to Tasker notifications failed")
+                } else {
+                    Log.d("FCM", "Successfully subscribed to Tasker notifications")
+                }
+            }
     }
 
     private fun setupDependencies() {

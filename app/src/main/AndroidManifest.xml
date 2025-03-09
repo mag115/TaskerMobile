@@ -4,6 +4,8 @@
     package="com.taskermobile">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".TaskerApplication"
         android:allowBackup="true"
@@ -32,13 +34,23 @@
         </activity>
 
         <service
+<<<<<<< Updated upstream
             android:name="com.taskermobile.data.service.NotificationService"
+=======
+            android:name="com.taskermobile.data.service.MyFirebaseMessagingService"
+>>>>>>> Stashed changes
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
 
+<<<<<<< Updated upstream
+=======
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="tasker_notifications" />
+>>>>>>> Stashed changes
     </application>
 
 </manifest>

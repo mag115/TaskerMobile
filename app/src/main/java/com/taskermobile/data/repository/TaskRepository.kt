@@ -200,4 +200,8 @@ class TaskRepository(
             }
         }
     }
+
+    fun updateTimeSpent(taskId: Long, timeSpent: Double) {
+
+    }
 } 

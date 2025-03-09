@@ -15,9 +15,18 @@ interface UserService {
     @GET("users")
     suspend fun getAllUsers(): Response<List<User>>
 
+<<<<<<< Updated upstream
     @POST("users/{id}/update-fcm-token")
     suspend fun updateFcmToken(
         @Path("id") userId: Long,
         @Body fcmToken: String
     ): Response<Unit>
+=======
+    @POST("/users/{userId}/register-token")
+    suspend fun registerToken(
+        @Path("userId") userId: Long,
+        @Body token: Map<String, String> // Example payload: {"token": "fcm_token"}
+    ): Response<Unit>
+
+>>>>>>> Stashed changes
 }
