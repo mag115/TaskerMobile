@@ -1,8 +1,12 @@
 package com.taskermobile
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -13,30 +17,19 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import com.taskermobile.data.model.Project
+import androidx.work.*
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
-import com.taskermobile.ui.main.controllers.ProjectController
-import com.taskermobile.ui.main.controllers.ProjectsState
 import com.taskermobile.workers.NotificationWorker
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
-import android.Manifest
-import android.widget.Toast
-
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var sessionManager: SessionManager
-    private lateinit var projectController: ProjectController
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATIONS = 1001
@@ -49,18 +42,16 @@ class MainActivity : AppCompatActivity() {
 
         setupDependencies()
         setupNavigation()
-        setupProjectSelector()
-        requestNotificationPermission() // ✅ Ensure permission is requested at startup
+        setupToolbar()
+        requestNotificationPermission() // Ensure permission is requested at startup
     }
 
     private fun setupDependencies() {
         sessionManager = SessionManager(this)
-        val projectDao = (application as TaskerApplication).database.projectDao()
-        projectController = ProjectController(sessionManager, projectDao)
     }
 
     private fun setupNavigation() {
-        setSupportActionBar(binding.toolbar)
+        setSupportActionBar(binding.appToolbar as androidx.appcompat.widget.Toolbar)
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -69,61 +60,70 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.navigation_home,
-                R.id.navigation_tasks,
+                R.id.navigation_my_tasks,
+                R.id.navigation_all_tasks,
+                R.id.navigation_create_task,
+                R.id.navigation_notifications,
                 R.id.navigation_projects,
-                R.id.navigation_settings
+                R.id.navigation_project_report
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.bottomNavigation.setupWithNavController(navController)
     }
 
-    private fun setupProjectSelector() {
+
+
+    private fun setupToolbar() {
         lifecycleScope.launch {
-            projectController.projects.collectLatest { state ->
-                when (state) {
-                    is ProjectsState.Loading -> {
-                        binding.projectSelector.showLoading(true)
-                    }
-                    is ProjectsState.Success -> {
-                        binding.projectSelector.showLoading(false)
-                        binding.projectSelector.setProjects(state.projects)
+            val username = sessionManager.username.first() ?: "User"
 
-                        // Set current project
-                        sessionManager.currentProjectId.collectLatest { currentProjectId ->
-                            val currentProject = currentProjectId?.let { id ->
-                                state.projects.find { it.id == id }
-                            } ?: state.projects.firstOrNull()
+            // Access views using the binding object
+            binding.appToolbar.toolbarTitle.text = "Welcome, $username"
 
-                            currentProject?.let {
-                                binding.projectSelector.setCurrentProject(it)
-                            }
-                        }
-                    }
-
-                    is ProjectsState.Error -> {
-                        binding.projectSelector.showLoading(false)
-                    }
+            binding.appToolbar.logoutButton.setOnClickListener {
+                lifecycleScope.launch {
+                    sessionManager.clearSession()
+                    Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
+                    finish()
                 }
             }
         }
+    }
 
-        binding.projectSelector.setOnProjectSelectedListener { project ->
-            lifecycleScope.launch {
-                project.id?.let { sessionManager.saveCurrentProjectId(it) }
+
+
+    private fun updateBottomNavigationMenu(role: String?) {
+        val menu = binding.bottomNavigation.menu
+
+        when (role) {
+            "PROJECT_MANAGER" -> {
+                menu.findItem(R.id.navigation_my_tasks).isVisible = true
+                menu.findItem(R.id.navigation_all_tasks).isVisible = true
+                menu.findItem(R.id.navigation_create_task).isVisible = true
+                menu.findItem(R.id.navigation_notifications).isVisible = true
+                menu.findItem(R.id.navigation_projects).isVisible = true
+                menu.findItem(R.id.navigation_project_report).isVisible = true
+            }
+            "TEAM_MEMBER" -> {
+                menu.findItem(R.id.navigation_my_tasks).isVisible = true
+                menu.findItem(R.id.navigation_all_tasks).isVisible = true
+                menu.findItem(R.id.navigation_create_task).isVisible = false
+                menu.findItem(R.id.navigation_notifications).isVisible = true
+                menu.findItem(R.id.navigation_projects).isVisible = true
+                menu.findItem(R.id.navigation_project_report).isVisible = false
+            }
+            else -> {
+                menu.findItem(R.id.navigation_my_tasks).isVisible = false
+                menu.findItem(R.id.navigation_all_tasks).isVisible = false
+                menu.findItem(R.id.navigation_create_task).isVisible = false
+                menu.findItem(R.id.navigation_notifications).isVisible = false
+                menu.findItem(R.id.navigation_projects).isVisible = false
+                menu.findItem(R.id.navigation_project_report).isVisible = false
             }
         }
-
-        lifecycleScope.launch {
-            projectController.fetchAllProjects()
-        }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-    }
-
-    // ✅ Set up WorkManager for background notification polling
     private fun setupNotificationWorker() {
         val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(15, TimeUnit.MINUTES)
             .setConstraints(
@@ -140,7 +140,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    // ✅ Request Notification Permission for Android 13+
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -152,26 +151,27 @@ class MainActivity : AppCompatActivity() {
                     REQUEST_CODE_NOTIFICATIONS
                 )
             } else {
-                // ✅ Permission already granted, start NotificationWorker
                 setupNotificationWorker()
             }
         } else {
-            // ✅ Not Android 13+, start NotificationWorker without permission
             setupNotificationWorker()
         }
     }
 
-    // ✅ Handle permission result for notifications
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_NOTIFICATIONS) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                setupNotificationWorker() // ✅ Start worker if granted
+                setupNotificationWorker()
             } else {
-                Toast.makeText(this, "Notifications are disabled. You can enable them in settings.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Notifications disabled. Enable them in settings.", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 }

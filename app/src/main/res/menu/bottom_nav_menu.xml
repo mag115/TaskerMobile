@@ -1,19 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
     <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home"
-        android:title="Home"/>
+        android:title="Home" />
+
     <item
-        android:id="@+id/navigation_tasks"
+        android:id="@+id/navigation_my_tasks"
+        android:icon="@drawable/ic_tasks"
+        android:title="My Tasks" />
+
+    <item
+        android:id="@+id/navigation_all_tasks"
+        android:icon="@drawable/ic_all_tasks"
+        android:title="All Tasks" />
+
+    <item
+        android:id="@+id/navigation_create_task"
         android:icon="@drawable/ic_add"
-        android:title="Tasks"/>
+        android:title="Create Task" />
+
+    <item
+        android:id="@+id/navigation_notifications"
+        android:icon="@drawable/ic_mail"
+        android:title="Notifications" />
+
     <item
         android:id="@+id/navigation_projects"
-        android:icon="@drawable/ic_mail"
-        android:title="Projects"/>
+        android:icon="@drawable/ic_projects"
+        android:title="Projects" />
+
     <item
-        android:id="@+id/navigation_settings"
-        android:icon="@drawable/ic_person"
-        android:title="Settings"/>
-</menu> 
+        android:id="@+id/navigation_project_report"
+        android:icon="@drawable/ic_report"
+        android:title="Project Report" />
+
+</menu>

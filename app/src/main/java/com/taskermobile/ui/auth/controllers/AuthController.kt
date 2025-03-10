@@ -1,6 +1,7 @@
 package com.taskermobile.ui.auth.controllers
 
 import android.util.Log
+import com.taskermobile.data.model.SignupRequest
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,9 @@ class AuthController(
                         token = loginResponse.token,
                         expiresIn = loginResponse.expiresIn,
                         userId = loginResponse.userId,
-                        username = loginResponse.username
+                        username = loginResponse.username,
+                        role = loginResponse.role,  // ✅ Ensure role is saved
+                        projects = emptyList()  // TODO: Update if backend returns projects..?
                     )
                     withContext(Dispatchers.Main) {
                         onResult(true, null)
@@ -47,14 +50,10 @@ class AuthController(
     /**
      * Handle user signup
      */
-    fun signup(
-        username: String,
-        email: String,
-        password: String,
-        onResult: (Boolean, String?) -> Unit
-    ) {
+
+    fun signup(username: String, email: String, password: String, role: String, onResult: (Boolean, String?) -> Unit) {
         coroutineScope.launch {
-            val result = repository.signup(username, email, password)
+            val result = repository.signup(SignupRequest(username, email, password, role))
             result.fold(
                 onSuccess = { signupResponse ->
                     Log.d("AuthController", "Signup successful: ${signupResponse.username}")
@@ -63,7 +62,9 @@ class AuthController(
                         token = signupResponse.token,
                         expiresIn = signupResponse.expiresIn,
                         userId = signupResponse.userId,
-                        username = signupResponse.username
+                        username = signupResponse.username,
+                        role = signupResponse.role,
+                        projects = emptyList()
                     )
 
                     withContext(Dispatchers.Main) {

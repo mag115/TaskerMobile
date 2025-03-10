@@ -8,20 +8,18 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.taskermobile.R
 import com.taskermobile.data.session.SessionManager
-import com.taskermobile.databinding.FragmentTasksBinding
+import com.taskermobile.databinding.FragmentAllTasksBinding
 import com.taskermobile.ui.adapters.TaskAdapter
 import com.taskermobile.ui.main.controllers.TaskController
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.util.Log
 
-class TasksFragment : Fragment() {
-    private var _binding: FragmentTasksBinding? = null
+class AllTasksFragment : Fragment() {
+    private var _binding: FragmentAllTasksBinding? = null
     private val binding get() = _binding!!
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var taskController: TaskController
@@ -33,7 +31,7 @@ class TasksFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentTasksBinding.inflate(inflater, container, false)
+        _binding = FragmentAllTasksBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -61,7 +59,7 @@ class TasksFragment : Fragment() {
 
     private fun setupFab() {
         binding.fabAddTask.setOnClickListener {
-            findNavController().navigate(R.id.action_tasksFragment_to_createTaskFragment)
+            findNavController().navigate(R.id.action_allTasksFragment_to_createTaskFragment)
         }
     }
 
@@ -92,7 +90,7 @@ class TasksFragment : Fragment() {
                     try {
                         _binding?.progressBar?.visibility = View.VISIBLE
                         _binding?.emptyStateText?.visibility = View.GONE
-                        
+
                         if (projectId == null) {
                             _binding?.apply {
                                 progressBar.visibility = View.GONE
@@ -102,9 +100,9 @@ class TasksFragment : Fragment() {
                             }
                             return@launch
                         }
-                        
+
                         Log.d("TasksFragment", "Loading tasks for project ID: $projectId")
-                        
+
                         taskController.getTasksByProject(projectId).collect { tasks ->
                             _binding?.apply {
                                 progressBar.visibility = View.GONE
@@ -145,4 +143,4 @@ class TasksFragment : Fragment() {
         _binding = null
         super.onDestroyView()
     }
-} 
+}

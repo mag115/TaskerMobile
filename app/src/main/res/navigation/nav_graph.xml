@@ -10,36 +10,36 @@
         android:label="Home" />
 
     <fragment
-        android:id="@+id/navigation_tasks"
-        android:name="com.taskermobile.ui.main.fragments.TasksFragment"
-        android:label="Tasks">
-        <action
-            android:id="@+id/action_tasksFragment_to_createTaskFragment"
-            app:destination="@id/createTaskFragment" />
-    </fragment>
+        android:id="@+id/navigation_my_tasks"
+        android:name="com.taskermobile.ui.main.fragments.MyTasksFragment"
+        android:label="My Tasks" />
+
+    <fragment
+        android:id="@+id/navigation_all_tasks"
+        android:name="com.taskermobile.ui.main.fragments.AllTasksFragment"
+        android:label="All Tasks" />
+
+    <fragment
+        android:id="@+id/navigation_create_task"
+        android:name="com.taskermobile.ui.main.fragments.CreateTaskFragment"
+        android:label="Create Task" />
+
+    <action
+        android:id="@+id/action_allTasksFragment_to_createTaskFragment"
+        app:destination="@id/navigation_create_task" />
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.taskermobile.ui.main.fragments.NotificationsFragment"
+        android:label="Notifications" />
 
     <fragment
         android:id="@+id/navigation_projects"
         android:name="com.taskermobile.ui.main.fragments.ProjectsFragment"
-        android:label="Projects">
-        <action
-            android:id="@+id/actionProjectsFragmentToCreateProject"
-            app:destination="@id/createProjectFragment" />
-    </fragment>
+        android:label="Projects" />
 
     <fragment
-        android:id="@+id/navigation_settings"
-        android:name="com.taskermobile.ui.main.fragments.UserFragment"
-        android:label="Users" />
-
-    <fragment
-        android:id="@+id/createProjectFragment"
-        android:name="com.taskermobile.ui.main.fragments.CreateProjectFragment"
-        android:label="Create Project" />
-
-    <fragment
-        android:id="@+id/createTaskFragment"
-        android:name="com.taskermobile.ui.main.fragments.CreateTaskFragment"
-        android:label="Create Task" />
-
-</navigation> 
+        android:id="@+id/navigation_project_report"
+        android:name="com.taskermobile.ui.main.fragments.ProjectReportFragment"
+        android:label="Project Report" />
+</navigation>
