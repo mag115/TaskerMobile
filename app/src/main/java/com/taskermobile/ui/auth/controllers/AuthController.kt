@@ -29,8 +29,7 @@ class AuthController(
                         expiresIn = loginResponse.expiresIn,
                         userId = loginResponse.userId,
                         username = loginResponse.username,
-                        role = loginResponse.role,  // ✅ Ensure role is saved
-                        projects = emptyList()  // TODO: Update if backend returns projects..?
+                        role = loginResponse.role  // ✅ Ensure role is saved
                     )
                     withContext(Dispatchers.Main) {
                         onResult(true, null)
@@ -51,9 +50,17 @@ class AuthController(
      * Handle user signup
      */
 
-    fun signup(username: String, email: String, password: String, role: String, onResult: (Boolean, String?) -> Unit) {
+    fun signup(
+        username: String,
+        email: String,
+        password: String,
+        role: String, // ✅ Include role
+        onResult: (Boolean, String?) -> Unit
+    ) {
         coroutineScope.launch {
-            val result = repository.signup(SignupRequest(username, email, password, role))
+            val signupRequest = SignupRequest(username, email, password, role) // ✅ Wrap parameters in object
+            val result = repository.signup(signupRequest) // ✅ Pass as single object
+
             result.fold(
                 onSuccess = { signupResponse ->
                     Log.d("AuthController", "Signup successful: ${signupResponse.username}")
@@ -63,8 +70,7 @@ class AuthController(
                         expiresIn = signupResponse.expiresIn,
                         userId = signupResponse.userId,
                         username = signupResponse.username,
-                        role = signupResponse.role,
-                        projects = emptyList()
+                        role = signupResponse.role
                     )
 
                     withContext(Dispatchers.Main) {
@@ -80,6 +86,7 @@ class AuthController(
             )
         }
     }
+
 
 
     /**

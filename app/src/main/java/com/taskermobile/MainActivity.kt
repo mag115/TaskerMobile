@@ -70,6 +70,11 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.bottomNavigation.setupWithNavController(navController)
+
+        lifecycleScope.launch {
+            val role = sessionManager.role.first() ?: "TEAM_MEMBER"
+            updateBottomNavigationMenu(role)
+        }
     }
 
 

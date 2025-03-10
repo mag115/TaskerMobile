@@ -6,6 +6,7 @@ import android.text.method.PasswordTransformationMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -46,8 +47,19 @@ class SignupFragment : Fragment() {
             emailInput.addTextChangedListener { validateInputs() }
             passwordInput.transformationMethod = PasswordTransformationMethod.getInstance()
             confirmPasswordInput.transformationMethod = PasswordTransformationMethod.getInstance()
+
+            // ✅ Setup Role Selection Spinner
+            ArrayAdapter.createFromResource(
+                requireContext(),
+                R.array.user_roles,  // Defined in strings.xml
+                android.R.layout.simple_spinner_item
+            ).also { adapter ->
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                binding.roleSpinner.adapter = adapter
+            }
         }
     }
+
 
     private fun setupListeners() {
         binding.signupButton.setOnClickListener {
@@ -57,6 +69,7 @@ class SignupFragment : Fragment() {
             val email = binding.emailInput.text.toString()
             val password = binding.passwordInput.text.toString()
             val confirmPassword = binding.confirmPasswordInput.text.toString()
+            val role = binding.roleSpinner.selectedItem.toString() // ✅ Capture role
 
             if (!validatePasswords(password, confirmPassword)) {
                 showError("Passwords don't match")
@@ -67,7 +80,7 @@ class SignupFragment : Fragment() {
             updateLoadingState()
 
             lifecycleScope.launch {
-                authController.signup(username, email, password) { success, message ->
+                authController.signup(username, email, password, role) { success, message ->
                     loading = false
                     activity?.runOnUiThread {
                         updateLoadingState()
@@ -83,7 +96,8 @@ class SignupFragment : Fragment() {
             }
         }
 
-        binding.loginLink.setOnClickListener {
+
+    binding.loginLink.setOnClickListener {
             // Navigate to login fragment
             parentFragmentManager.beginTransaction()
                 .replace(R.id.auth_container, LoginFragment())

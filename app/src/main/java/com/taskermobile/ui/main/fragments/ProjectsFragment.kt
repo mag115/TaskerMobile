@@ -60,7 +60,7 @@ class ProjectsFragment : Fragment() {
 
     private fun setupFab() {
         binding.fabAddProject.setOnClickListener {
-            findNavController().navigate(ProjectsFragmentDirections.actionProjectsFragmentToCreateProject())
+            findNavController().navigate(ProjectsFragmentDirections.actionProjectsFragmentToCreateProjectFragment())
         }
     }
 

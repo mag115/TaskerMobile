@@ -5,5 +5,5 @@ data class LoginResponse(
     val expiresIn: Long,
     val role: String,
     val userId: Long,
-    val username: String
+    val username: String,
 )

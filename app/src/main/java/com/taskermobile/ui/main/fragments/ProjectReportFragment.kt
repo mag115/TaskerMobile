@@ -1,4 +1,6 @@
 package com.taskermobile.ui.main.fragments
 
-class ProjectReportFragment {
+import androidx.fragment.app.Fragment
+
+class ProjectReportFragment : Fragment()  {
 }

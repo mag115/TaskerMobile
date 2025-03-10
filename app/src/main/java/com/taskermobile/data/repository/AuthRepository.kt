@@ -39,9 +39,9 @@ class AuthRepository(
     }
 
 
-    suspend fun signup(username: String, email: String, password: String): Result<LoginResponse> {
+    suspend fun signup(signupRequest: SignupRequest): Result<LoginResponse> {
         return try {
-            val response = authApiService.signup(SignupRequest(username, email, password))
+            val response = authApiService.signup(signupRequest) // ✅ Correctly pass SignupRequest object
             if (response.isSuccessful) {
                 val signupResponse = response.body()
                 if (signupResponse != null) {

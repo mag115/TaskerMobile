@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">TaskerMobile</string>
+
+    <string-array name="user_roles">
+        <item>PROJECT_MANAGER</item>
+        <item>TEAM_MEMBER</item>
+    </string-array>
+
 </resources>

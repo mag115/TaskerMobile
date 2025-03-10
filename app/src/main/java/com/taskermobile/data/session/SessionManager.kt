@@ -39,7 +39,7 @@ class SessionManager(private val context: Context) {
         userId: Long,
         username: String,
         role: String,
-        projects: List<Long> // 🔹 Store project IDs
+        //projects: List<Long>  Store project IDs?
     ) {
         val expiresAt = System.currentTimeMillis() + expiresIn
 
@@ -49,7 +49,7 @@ class SessionManager(private val context: Context) {
             preferences[USERNAME_KEY] = username
             preferences[ROLE_KEY] = role
             preferences[EXPIRES_AT] = expiresAt
-            preferences[PROJECTS_KEY] = projects.joinToString(",") // 🔹 Convert list to CSV
+            //preferences[PROJECTS_KEY] = projects.joinToString(",")  Convert list to CSV
         }
     }
 

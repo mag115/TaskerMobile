@@ -45,6 +45,20 @@
         android:inputType="textPassword"
         android:layout_marginBottom="16dp"/>
 
+    <!-- ✅ Role Selection Spinner -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Role"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp"/>
+
+    <Spinner
+        android:id="@+id/roleSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"/>
+
     <Button
         android:id="@+id/signupButton"
         android:layout_width="match_parent"
@@ -73,4 +87,4 @@
         android:text="Already have an account? Login"
         android:layout_marginTop="16dp"/>
 
-</LinearLayout> 
+</LinearLayout>
