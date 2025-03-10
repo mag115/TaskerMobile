@@ -18,6 +18,7 @@ import com.taskermobile.ui.main.controllers.ProjectsState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.taskermobile.R
 
 class ProjectsFragment : Fragment() {
     private var _binding: FragmentProjectsBinding? = null
@@ -60,7 +61,7 @@ class ProjectsFragment : Fragment() {
 
     private fun setupFab() {
         binding.fabAddProject.setOnClickListener {
-            findNavController().navigate(ProjectsFragmentDirections.actionProjectsFragmentToCreateProjectFragment())
+            findNavController().navigate(R.id.navigation_create_project)
         }
     }
 

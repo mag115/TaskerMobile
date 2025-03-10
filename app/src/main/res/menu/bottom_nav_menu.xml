@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
     <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home"
@@ -17,11 +15,6 @@
         android:title="All Tasks" />
 
     <item
-        android:id="@+id/navigation_create_task"
-        android:icon="@drawable/ic_add"
-        android:title="Create Task" />
-
-    <item
         android:id="@+id/navigation_notifications"
         android:icon="@drawable/ic_mail"
         android:title="Notifications" />
@@ -30,10 +23,4 @@
         android:id="@+id/navigation_projects"
         android:icon="@drawable/ic_projects"
         android:title="Projects" />
-
-    <item
-        android:id="@+id/navigation_project_report"
-        android:icon="@drawable/ic_report"
-        android:title="Project Report" />
-
 </menu>

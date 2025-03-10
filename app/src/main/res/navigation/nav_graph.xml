@@ -38,7 +38,7 @@
         android:name="com.taskermobile.ui.main.fragments.ProjectsFragment"
         android:label="Projects">
         <action
-            android:id="@+id/action_projectsFragment_to_createProjectFragment"
+            android:id="@+id/action_projectsFragment_to_createProject"
             app:destination="@id/navigation_create_project" />
     </fragment>
 

@@ -3,6 +3,7 @@ package com.taskermobile.ui.shared
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.taskermobile.data.session.SessionManager
@@ -18,7 +19,11 @@ class AppToolbar @JvmOverloads constructor(
     private val binding: LayoutAppToolbarBinding
 
     init {
-        binding = LayoutAppToolbarBinding.inflate(LayoutInflater.from(context), this)
+        // ✅ Corrected `inflate()` to properly attach the view
+        val rootView = LayoutInflater.from(context).inflate(
+            com.taskermobile.R.layout.layout_app_toolbar, this, true
+        )
+        binding = LayoutAppToolbarBinding.bind(rootView) // ✅ Properly bind view
     }
 
     fun setup(
@@ -31,11 +36,12 @@ class AppToolbar @JvmOverloads constructor(
         title?.let { binding.toolbarTitle.text = it }
 
         if (showBackButton) {
+            binding.backButton.visibility = View.VISIBLE
             binding.backButton.setOnClickListener {
                 onBackPressed?.invoke()
             }
         } else {
-            binding.backButton.visibility = GONE
+            binding.backButton.visibility = View.GONE
         }
 
         binding.logoutButton.setOnClickListener {
@@ -45,4 +51,4 @@ class AppToolbar @JvmOverloads constructor(
             }
         }
     }
-} 
+}

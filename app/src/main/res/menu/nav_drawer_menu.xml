@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_create_task"
+        android:icon="@drawable/ic_add"
+        android:title="Create Task" />
+
+    <item
+        android:id="@+id/navigation_project_report"
+        android:icon="@drawable/ic_report"
+        android:title="Project Report" />
+</menu>
