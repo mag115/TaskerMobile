@@ -7,6 +7,10 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.local.TaskerDatabase
+import com.taskermobile.data.repository.NotificationRepository
+import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentNotificationsBinding
 import com.taskermobile.ui.adapters.NotificationAdapter
 import com.taskermobile.ui.viewmodels.NotificationsViewModel
@@ -15,8 +19,21 @@ class NotificationsFragment : Fragment() {
     private var _binding: FragmentNotificationsBinding? = null
     private val binding get() = _binding!!
 
-    // ✅ Use viewModels() for ViewModel initialization
-    private val viewModel: NotificationsViewModel by viewModels()
+    // ✅ Initialize dependencies
+    private val sessionManager by lazy { SessionManager(requireContext()) }
+    private val database by lazy { TaskerDatabase.getDatabase(requireContext()) }
+    private val notificationDao by lazy { database.notificationDao() }
+    private val notificationRepository by lazy {
+        NotificationRepository(
+            notificationApi = RetrofitClient.createService(sessionManager), // ✅ Pass sessionManager
+            notificationDao = notificationDao
+        )
+    }
+
+    // ✅ Use ViewModel factory
+    private val viewModel: NotificationsViewModel by viewModels {
+        NotificationsViewModel.Factory(notificationRepository)
+    }
 
     private lateinit var adapter: NotificationAdapter
 

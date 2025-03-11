@@ -1,9 +1,6 @@
 package com.taskermobile.ui.viewmodels
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.taskermobile.data.local.entity.NotificationEntity
 import com.taskermobile.data.repository.NotificationRepository
 import kotlinx.coroutines.launch
@@ -22,10 +19,9 @@ class NotificationsViewModel(private val notificationRepository: NotificationRep
 
     fun fetchNotifications() {
         viewModelScope.launch {
-            val result = notificationRepository.getLocalNotifications()
-            result.collect { notifications ->
+            notificationRepository.getLocalNotifications().collect { notifications ->
                 _notifications.postValue(notifications)
-                _unreadCount.postValue(notifications.count { !it.isRead }) // Count unread
+                _unreadCount.postValue(notifications.count { !it.isRead }) // ✅ Count unread
             }
         }
     }
@@ -36,5 +32,15 @@ class NotificationsViewModel(private val notificationRepository: NotificationRep
             fetchNotifications() // ✅ Refresh list after marking as read
         }
     }
-}
 
+    // ✅ Add a Factory for dependency injection
+    class Factory(private val repository: NotificationRepository) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(NotificationsViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return NotificationsViewModel(repository) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+}
