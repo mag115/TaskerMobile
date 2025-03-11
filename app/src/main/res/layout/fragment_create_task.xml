@@ -74,6 +74,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
 
+        <Spinner
+            android:id="@+id/userDropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/user_list"/>
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

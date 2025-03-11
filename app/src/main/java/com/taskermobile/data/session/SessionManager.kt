@@ -52,6 +52,12 @@ class SessionManager(private val context: Context) {
             //preferences[PROJECTS_KEY] = projects.joinToString(",")  Convert list to CSV
         }
     }
+    suspend fun saveUserInfo(userId: Long, username: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USERNAME_KEY] = username
+            preferences[USER_ID_KEY] = userId
+        }
+    }
 
     /** ✅ Fetch stored projects */
     suspend fun getUserProjects(): List<Project> {

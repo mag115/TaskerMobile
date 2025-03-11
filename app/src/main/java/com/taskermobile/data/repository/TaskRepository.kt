@@ -2,6 +2,7 @@ package com.taskermobile.data.repository
 
 import com.taskermobile.data.local.dao.TaskDao
 import com.taskermobile.data.local.dao.ProjectDao
+import com.taskermobile.data.local.dao.UserDao
 import com.taskermobile.data.local.entity.TaskEntity
 import com.taskermobile.data.local.entity.ProjectEntity
 import com.taskermobile.data.model.Task
@@ -11,17 +12,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import retrofit2.HttpException
 import android.util.Log
+import kotlinx.coroutines.flow.flow
 
 class TaskRepository(
     private val taskDao: TaskDao,
     private val taskService: TaskService,
-    private val projectDao: ProjectDao
+    private val projectDao: ProjectDao,
+    private val userDao: UserDao
 ) {
-    fun getAllTasks(): Flow<List<Task>> {
-        return taskDao.getAllTasks()
-            .map { entities -> entities.map { it.toTask() } }
-            .onStart { refreshTasks() }
-    }
 
     private suspend fun refreshTasks() {
         try {
@@ -45,8 +43,24 @@ class TaskRepository(
 
     suspend fun insertTask(task: Task) {
         val taskEntity = TaskEntity.fromTask(task)
+        Log.d("TaskRepository", "Inserting task: ${taskEntity}")
         taskDao.insertTask(taskEntity)
+        syncTaskWithBackend(taskEntity)
     }
+    private suspend fun syncTaskWithBackend(task: TaskEntity) {
+        try {
+            // Send task to the server using Retrofit API
+            val response = taskService.createTask(task.toTask())  // You would need a TaskService to make API calls to the backend
+            if (response.isSuccessful) {
+                Log.d("TaskRepository", "Task synced with server: ${response.body()}")
+            } else {
+                Log.d("TaskRepository", "Failed to sync task with server: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Log.e("TaskRepository", "Error syncing task with server", e)
+        }
+    }
+
 
     suspend fun updateTask(task: Task) {
         val taskEntity = TaskEntity.fromTask(task)
@@ -138,9 +152,43 @@ class TaskRepository(
         }
     }
 
-    fun getTasksByUser(userId: Long): Flow<List<Task>> {
-        return taskDao.getTasksByUser(userId)
-            .map { entities -> entities.map { it.toTask() } }
+    //fun getTasksByUser(userId: Long, projectId: Long): Flow<List<Task>> {
+      //  return taskDao.getTasksByUser(userId, projectId) // Ensure TaskDao supports this
+        //    .map { entities -> entities.map { it.toTask() } }
+    //}
+
+    fun getAllTasks(): Flow<List<Task>> {
+        return taskDao.getAllTasks()
+            .map { entities -> entities.map { it.toTask() } } // Convert from TaskEntity to Task
+    }
+
+    fun getAllTasksForUser(username: String): Flow<List<Task>> {
+        return flow {
+            val userId = userDao.getUserIdByUsername(username)
+            // Fetch tasks for the user with the given userId
+            taskDao.getAllTasksForUser(userId)
+                .map { entities -> entities.map { it.toTask() } }
+                .onStart { refreshTasks() }
+                .collect { tasks ->
+                    emit(tasks) // Emit the tasks to the flow
+                }
+        }
+    }
+
+
+    fun getTasksByUsername(username: String): Flow<List<Task>> {
+        return flow {
+            // Get the user ID by username
+            val userId = userDao.getUserIdByUsername(username)  // Fetch the userId using the username
+            if (userId != null) {
+                // If the user is found, fetch tasks by assignedUserId
+                taskDao.getTasksByUser(userId).collect { tasks ->
+                    emit(tasks.map { it.toTask() }) // Convert TaskEntity to Task
+                }
+            } else {
+                emit(emptyList()) // Emit empty list if the user is not found
+            }
+        }
     }
 
     // Remote operations with local caching

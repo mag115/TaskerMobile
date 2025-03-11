@@ -17,7 +17,8 @@ class TaskController(context: Context, sessionManager: SessionManager) {
     private val database = TaskerDatabase.getDatabase(context)
     private val taskDao = database.taskDao()
     private val projectDao = database.projectDao()
-    private val taskRepository = TaskRepository(taskDao, taskService, projectDao)
+    private val userDao = database.userDao()
+    private val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao)
 
     suspend fun createTask(task: Task): Result<Task> {
         return try {
@@ -63,7 +64,7 @@ class TaskController(context: Context, sessionManager: SessionManager) {
         taskRepository.refreshProjectTasks(projectId)
     }
 
-    fun getTasksByUser(userId: Long): Flow<List<Task>> {
-        return taskRepository.getTasksByUser(userId)
-    }
+   // fun getTasksByUser(userId: Long, projectId: Long): Flow<List<Task>> {
+     //   return taskRepository.getTasksByUser(userId, projectId)
+    //}
 }

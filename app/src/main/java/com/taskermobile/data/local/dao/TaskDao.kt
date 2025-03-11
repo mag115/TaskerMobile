@@ -15,6 +15,12 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE (projectId = :projectId)")
     fun getAssignedTasks(projectId: Long): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks WHERE (assignedUserId = :userId)")
+    fun getAllTasksForUser(userId: Long): Flow<List<TaskEntity>>
+
+    // @Query("SELECT * FROM tasks WHERE assignedUserId = :userId AND projectId = :projectId")
+
+    //fun getTasksByUser(userId: Long, projectId: Long): Flow<List<TaskEntity>>
     @Query("SELECT * FROM tasks WHERE assignedUserId = :userId")
     fun getTasksByUser(userId: Long): Flow<List<TaskEntity>>
 

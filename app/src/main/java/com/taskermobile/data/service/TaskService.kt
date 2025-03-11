@@ -21,7 +21,12 @@ interface TaskService {
     @GET("/tasks")
     suspend fun getAllTasks(@Query("project_id") projectId: Long): Response<List<Task>>
 
-    @GET("/assigned")
-    suspend fun getAssignedTasks(@Query("project_id") projectId: Long): Response<List<Task>>
-    
+    //@GET("/assigned")
+    //suspend fun getAssignedTasks(@Query("project_id") projectId: Long = 1L): Response<List<Task>>
+
+    @GET("/tasks/assigned")
+    suspend fun getAssignedTasks(
+        @Query("username") username: String,
+        @Query("project_id") projectId: Long
+    ): Response<List<Task>>
 }

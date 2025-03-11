@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="user_list">
+        <item>User 1</item>
+        <item>User 2</item>
+        <item>User 3</item>
+    </string-array>
+</resources>
