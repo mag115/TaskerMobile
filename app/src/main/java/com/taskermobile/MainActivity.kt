@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -17,8 +15,8 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
 import androidx.work.*
-import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationView
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
 import com.taskermobile.workers.NotificationWorker
@@ -44,7 +42,6 @@ class MainActivity : AppCompatActivity() {
 
         setupDependencies()
         setupNavigation()
-        setupToolbar()
         requestNotificationPermission()
     }
 
@@ -53,8 +50,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
-        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.app_toolbar)
-        setSupportActionBar(toolbar) // ✅ Fixed toolbar reference
+        // ✅ Use the updated toolbar reference
+        setSupportActionBar(binding.toolbar)
 
         drawerLayout = binding.drawerLayout
         val navHostFragment = supportFragmentManager
@@ -72,11 +69,11 @@ class MainActivity : AppCompatActivity() {
         )
 
         setupActionBarWithNavController(navController, appBarConfiguration)
-        findViewById<BottomNavigationView>(R.id.bottomNavigation).setupWithNavController(navController)
-        findViewById<NavigationView>(R.id.navigationView).setupWithNavController(navController)
+        binding.bottomNavigation.setupWithNavController(navController)
+        binding.navigationView.setupWithNavController(navController)
 
         val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, toolbar,
+            this, drawerLayout, binding.toolbar,
             R.string.navigation_drawer_open, R.string.navigation_drawer_close
         )
         drawerLayout.addDrawerListener(toggle)
@@ -88,35 +85,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupToolbar() {
-        val toolbarTitle = findViewById<TextView>(R.id.toolbarTitle)
-        val logoutButton = findViewById<Button>(R.id.logoutButton)
-
-        lifecycleScope.launch {
-            val username = sessionManager.username.first() ?: "User"
-            toolbarTitle.text = "Welcome, $username"
-
-            logoutButton.setOnClickListener {
-                lifecycleScope.launch {
-                    sessionManager.clearSession()
-                    Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
-        }
-    }
-
     private fun updateBottomNavigationMenu(role: String?) {
         val menu = binding.bottomNavigation.menu
 
         when (role) {
-            "PROJECT_MANAGER" -> {
-                menu.findItem(R.id.navigation_my_tasks).isVisible = true
-                menu.findItem(R.id.navigation_all_tasks).isVisible = true
-                menu.findItem(R.id.navigation_notifications).isVisible = true
-                menu.findItem(R.id.navigation_projects).isVisible = true
-            }
-            "TEAM_MEMBER" -> {
+            "PROJECT_MANAGER", "TEAM_MEMBER" -> {
                 menu.findItem(R.id.navigation_my_tasks).isVisible = true
                 menu.findItem(R.id.navigation_all_tasks).isVisible = true
                 menu.findItem(R.id.navigation_notifications).isVisible = true
