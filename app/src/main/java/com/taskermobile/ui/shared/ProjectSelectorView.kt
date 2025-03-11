@@ -23,6 +23,9 @@ class ProjectSelectorView @JvmOverloads constructor(
     init {
         binding = LayoutProjectSelectorBinding.inflate(LayoutInflater.from(context), this)
         setupClickListener()
+        // Ensure the button is clickable
+        binding.projectSelectorButton.isClickable = true
+        binding.projectSelectorButton.isFocusable = true
     }
 
     private fun setupClickListener() {
@@ -71,4 +74,6 @@ class ProjectSelectorView @JvmOverloads constructor(
         binding.loadingIndicator.visibility = if (show) View.VISIBLE else View.GONE
         binding.projectSelectorButton.visibility = if (show) View.INVISIBLE else View.VISIBLE
     }
+
+
 } 

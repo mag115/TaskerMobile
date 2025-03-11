@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupDependencies()
+        setupToolbar()  // ✅ Added setupToolbar() function
         setupNavigation()
         requestNotificationPermission()
     }
@@ -49,11 +52,29 @@ class MainActivity : AppCompatActivity() {
         sessionManager = SessionManager(this)
     }
 
-    private fun setupNavigation() {
-        // ✅ Use the updated toolbar reference
-        setSupportActionBar(binding.toolbar)
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar) // ✅ Ensures it's used as ActionBar
 
+        // ✅ Get the buttons from the correct layout (NOT directly from toolbar)
+        val logoutButton = findViewById<Button>(R.id.logoutButton)
+        val backButton = findViewById<ImageButton>(R.id.backButton)
+
+        backButton?.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
+
+        logoutButton?.setOnClickListener {
+            lifecycleScope.launch {
+                sessionManager.clearSession()
+                Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    private fun setupNavigation() {
         drawerLayout = binding.drawerLayout
+
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
@@ -72,8 +93,10 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavigation.setupWithNavController(navController)
         binding.navigationView.setupWithNavController(navController)
 
+        val toolbar = binding.appBarLayout.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+
         val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, binding.toolbar,
+            this, drawerLayout, toolbar,
             R.string.navigation_drawer_open, R.string.navigation_drawer_close
         )
         drawerLayout.addDrawerListener(toggle)
