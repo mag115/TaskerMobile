@@ -90,13 +90,9 @@ class SessionManager(private val context: Context) {
     val authState: Flow<Boolean> = context.dataStore.data.map { preferences ->
         val token = preferences[AUTH_TOKEN_KEY]
         val expiresAt = preferences[EXPIRES_AT] ?: 0
-        val isValid = token != null && expiresAt > 0 && System.currentTimeMillis() < expiresAt
+        token != null && expiresAt > System.currentTimeMillis()
+    }.distinctUntilChanged() // Prevent unnecessary recomputations
 
-        if (!isValid) {
-            clearSession()
-        }
-        isValid
-    }
 
     /** ✅ Clear session data */
     suspend fun clearSession() {

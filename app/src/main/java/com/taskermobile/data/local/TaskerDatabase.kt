@@ -25,7 +25,7 @@ import com.taskermobile.data.local.entity.UserEntity
         NotificationEntity::class,
         ProjectReportEntity::class // ✅ Ensured no duplicate entities
     ],
-    version = 4, // ✅ Make sure version is correct
+    version = 5, // ✅ Make sure version is correct
     exportSchema = false
 )
 @TypeConverters(TaskListConverter::class)
@@ -43,15 +43,14 @@ abstract class TaskerDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): TaskerDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
+                INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     TaskerDatabase::class.java,
                     "tasker_database"
                 )
-                    .fallbackToDestructiveMigration() // ✅ Ensures migration doesn't break
+                    .fallbackToDestructiveMigration()
                     .build()
-                INSTANCE = instance
-                instance
+                    .also { INSTANCE = it }
             }
         }
     }

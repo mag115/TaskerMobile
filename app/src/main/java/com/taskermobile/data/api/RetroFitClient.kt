@@ -4,6 +4,7 @@ package com.taskermobile.data.api
 import android.util.Log
 import com.taskermobile.data.session.SessionManager
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -38,13 +39,16 @@ object RetrofitClient {
         val authClient = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor { chain ->
-                // Inject auth token
-                val token = runBlocking { sessionManager.authToken.first() }
+                val token = runBlocking {
+                    sessionManager.authToken.firstOrNull() // Avoid potential `null`
+                } ?: "" // Fallback to empty string
+
                 val request = chain.request().newBuilder()
                     .addHeader("Authorization", "Bearer $token")
                     .build()
                 chain.proceed(request)
             }
+
             .build()
 
         return Retrofit.Builder()
