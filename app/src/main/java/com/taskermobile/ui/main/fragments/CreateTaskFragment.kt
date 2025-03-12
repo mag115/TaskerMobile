@@ -50,7 +50,7 @@ class CreateTaskFragment : Fragment() {
     }
     // Initialize Repository
     private val taskRepository: TaskRepository by lazy {
-        TaskRepository(database.taskDao(), taskService,database.projectDao(), database.userDao())
+        TaskRepository(database.taskDao(), taskService,database.projectDao(), database.userDao(), database.notificationDao())
     }
 
     // Initialize ViewModel using Factory

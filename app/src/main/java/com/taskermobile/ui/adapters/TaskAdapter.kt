@@ -12,7 +12,11 @@ import android.util.Log
 import com.taskermobile.ui.viewmodels.MyTasksViewModel
 
 
-class TaskAdapter(private val onTimerClick: (Task) -> Unit, private val viewModel: MyTasksViewModel) : ListAdapter<Task, TaskAdapter.TaskViewHolder>(TaskDiffCallback()) {
+class TaskAdapter(
+    private val onTimerClick: (Task) -> Unit,
+    private val onCommentSend: (Task, String) -> Unit, // Added a callback for comments
+    private val viewModel: MyTasksViewModel
+) : ListAdapter<Task, TaskAdapter.TaskViewHolder>(TaskDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val binding = ItemTaskBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -23,24 +27,23 @@ class TaskAdapter(private val onTimerClick: (Task) -> Unit, private val viewMode
         holder.bind(getItem(position))
     }
 
-    inner class TaskViewHolder(private val binding: ItemTaskBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class TaskViewHolder(private val binding: ItemTaskBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
         private var timerRunning = false
-        private var elapsedTime = 0L // Elapsed time in seconds for the current session
+        private var elapsedTime = 0L
         private var handler = Handler()
         private lateinit var runnable: Runnable
-        private var t=0L
+        private var t = 0L
 
         fun bind(task: Task) {
             binding.apply {
                 taskTitle.text = task.title
-                taskDescription.text = task.description
-                taskPriority.text = "Priority: ${task.priority}"
-                taskStatus.text = "Status: ${task.status}"
-                taskDeadline.text = task.deadline?.let { "Deadline: $it" } ?: "No deadline"
-
-                // Set the task timer display based on timeSpent
-                taskTimerLabel.text =
-                    formatTime(task.timeSpent.toLong()) // Start the display from the last timeSpent
+                taskDescription.text = task.description ?: "No description" // ✅ Add fallback
+                taskPriority.text = "Priority: ${task.priority ?: "N/A"}"
+                taskStatus.text = "Status: ${task.status ?: "N/A"}"
+                taskDeadline.text = "Deadline: ${task.deadline ?: "No deadline"}"
+                taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
                 taskTimerButton.setOnClickListener {
                     if (timerRunning) {
@@ -49,64 +52,64 @@ class TaskAdapter(private val onTimerClick: (Task) -> Unit, private val viewMode
                         startTimer(task)
                     }
                 }
+
+                // **Handle comment submission**
+                sendCommentButton.setOnClickListener {
+                    val commentText = commentEditText.text.toString()
+                    if (commentText.isNotBlank()) {
+                        onCommentSend(task, commentText) // Call ViewModel function
+                        commentEditText.text.clear() // Clear text after sending
+                    }
+                }
             }
         }
 
         private fun startTimer(task: Task) {
-            if (!timerRunning) { // Only start the timer if it's not already running
+            if (!timerRunning) {
                 timerRunning = true
-                // Start elapsedTime from the last timeSpent
                 elapsedTime = task.timeSpent.toLong()
                 t = elapsedTime
-
-                Log.d("TaskViewHolder", "Starting timer. Initial elapsedTime: $elapsedTime")
 
                 runnable = object : Runnable {
                     override fun run() {
                         if (timerRunning) {
                             elapsedTime++
-                            binding.taskTimerLabel.text =
-                                formatTime(elapsedTime) // Update the clock UI
-                            Log.d("TaskViewHolder", "Timer running. elapsedTime: $elapsedTime")
-                            handler.postDelayed(this, 1000) // Continue every 1 second
+                            binding.taskTimerLabel.text = formatTime(elapsedTime)
+                            handler.postDelayed(this, 1000)
                         }
                     }
                 }
-
-                handler.post(runnable) // Start the timer
+                handler.post(runnable)
             }
         }
 
         private fun stopTimer(task: Task) {
             timerRunning = false
-            handler.removeCallbacks(runnable)  // Stop the timer updates
+            handler.removeCallbacks(runnable)
 
-            task.timeSpent += elapsedTime-t // Add the elapsed time to timeSpent
-            task.elapsedTime = elapsedTime.toDouble() // Store the elapsed time in the task
+            task.timeSpent += elapsedTime - t
+            task.elapsedTime = elapsedTime.toDouble()
 
-            binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong()) // Update UI with the updated timeSpent
+            binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
-            // Call the ViewModel method to update the task in the database and backend
             viewModel.updateTaskInDatabaseAndBackend(task)
-
             elapsedTime = 0
         }
     }
 
-        private fun formatTime(seconds: Long): String {
-            val minutes = seconds / 60
-            val remainingSeconds = seconds % 60
-            return String.format("%02d:%02d", minutes, remainingSeconds)
-        }
+    private fun formatTime(seconds: Long): String {
+        val minutes = seconds / 60
+        val remainingSeconds = seconds % 60
+        return String.format("%02d:%02d", minutes, remainingSeconds)
+    }
+}
+
+private class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
+    override fun areItemsTheSame(oldItem: Task, newItem: Task): Boolean {
+        return oldItem.id == newItem.id
     }
 
-    private class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
-        override fun areItemsTheSame(oldItem: Task, newItem: Task): Boolean {
-            return oldItem.id == newItem.id
-        }
-
-        override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
-            return oldItem == newItem
-        }
-
+    override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
+        return oldItem == newItem
+    }
 }

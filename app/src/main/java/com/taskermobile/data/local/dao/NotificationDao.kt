@@ -1,11 +1,18 @@
 package com.taskermobile.data.local.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.taskermobile.data.local.entity.NotificationEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotificationDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNotification(notification: NotificationEntity)
+
+    @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
+    fun getAllLiveNotifications(): LiveData<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
     fun getAllNotifications(): Flow<List<NotificationEntity>>

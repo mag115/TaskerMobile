@@ -54,7 +54,6 @@ class NotificationsFragment : Fragment() {
         binding.notificationsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.notificationsRecyclerView.adapter = adapter
 
-        // ✅ Observe LiveData properly
         viewModel.notifications.observe(viewLifecycleOwner) { notifications ->
             binding.progressBar.visibility = View.GONE
             binding.swipeRefresh.isRefreshing = false

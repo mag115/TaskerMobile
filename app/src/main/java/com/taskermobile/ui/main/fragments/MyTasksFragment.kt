@@ -43,20 +43,27 @@ class MyTasksFragment : Fragment() {
         val taskDao = database.taskDao()
         val projectDao = database.projectDao()
         val userDao = database.userDao()
+        val notificationDao=database.notificationDao()
 
         val sessionManager = SessionManager(requireContext())
         val taskService = RetrofitClient.createService<TaskService>(sessionManager)
 
-        val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao)
+
+        val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao, notificationDao)
 
         val factory = MyTasksViewModelFactory(taskRepository, sessionManager, taskDao)
         viewModel = ViewModelProvider(this, factory)[MyTasksViewModel::class.java]
 
         // Pass the viewModel to the adapter
-        adapter = TaskAdapter({ task ->
-            // Here you can call whatever is necessary for each task click
-            // Timer click logic
-        }, viewModel)
+        adapter = TaskAdapter(
+            { task ->
+                // Handle task timer click here
+            },
+            { task, comment ->
+                viewModel.sendComment(task, comment) // ✅ Fix: Pass function for handling comments
+            },
+            viewModel 
+        )
 
         binding.myTasksRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.myTasksRecyclerView.adapter = adapter

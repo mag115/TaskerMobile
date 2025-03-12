@@ -59,10 +59,15 @@ class AllTasksFragment : Fragment() {
 
     private fun setupRecyclerView() {
         // Pass the ViewModel to the adapter, so the adapter can access the updateTaskTime method
-        taskAdapter = TaskAdapter({ task ->
-            // Here you can call whatever is necessary for each task click
-            // Timer click logic
-        }, viewModel)
+        taskAdapter = TaskAdapter(
+            { task ->
+                // Handle task timer click here
+            },
+            { task, comment ->
+                viewModel.sendComment(task, comment)
+            },
+            viewModel
+        )
         binding.tasksRecyclerView.layoutManager = LinearLayoutManager(context)
         binding.tasksRecyclerView.adapter = taskAdapter
     }

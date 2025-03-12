@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.taskermobile.data.local.converter.Converters
 import com.taskermobile.data.local.converter.TaskListConverter
 import com.taskermobile.data.local.dao.NotificationDao
 import com.taskermobile.data.local.dao.ProjectDao
@@ -23,12 +24,12 @@ import com.taskermobile.data.local.entity.UserEntity
         TaskEntity::class,
         UserEntity::class,
         NotificationEntity::class,
-        ProjectReportEntity::class // ✅ Ensured no duplicate entities
+        ProjectReportEntity::class
     ],
-    version = 5, // ✅ Make sure version is correct
+    version = 6,
     exportSchema = false
 )
-@TypeConverters(TaskListConverter::class)
+@TypeConverters(TaskListConverter::class, Converters::class)
 abstract class TaskerDatabase : RoomDatabase() {
 
     abstract fun projectDao(): ProjectDao
