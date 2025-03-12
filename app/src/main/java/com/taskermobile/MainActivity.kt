@@ -21,8 +21,10 @@ import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
+import com.taskermobile.ui.auth.controllers.AuthController
 import com.taskermobile.ui.shared.ProjectSelectorView
 import com.taskermobile.workers.NotificationWorker
 import kotlinx.coroutines.flow.first
@@ -35,6 +37,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var sessionManager: SessionManager
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var authController: AuthController
+
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATIONS = 1001
@@ -127,13 +131,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupDependencies() {
         sessionManager = SessionManager(this)
+
+        // Initialize AuthController
+        val authRepository = AuthRepository(RetrofitClient.authApiService)
+        authController = AuthController(authRepository, sessionManager)
     }
 
-    private fun setupToolbar() {
-        setSupportActionBar(binding.toolbar) // ✅ Ensures it's used as ActionBar
 
-        // ✅ Get the buttons from the correct layout (NOT directly from toolbar)
-        val logoutButton = findViewById<Button>(R.id.logoutButton)
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+
+        val logoutButton = findViewById<Button>(R.id.logoutButton) // ✅ Now correctly referenced
         val backButton = findViewById<ImageButton>(R.id.backButton)
 
         backButton?.setOnClickListener {
@@ -143,11 +151,13 @@ class MainActivity : AppCompatActivity() {
         logoutButton?.setOnClickListener {
             lifecycleScope.launch {
                 sessionManager.clearSession()
+                authController.logout(this@MainActivity) // ✅ Ensure logout works
                 Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
     }
+
 
     private fun setupNavigation() {
         drawerLayout = binding.drawerLayout

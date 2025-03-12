@@ -104,7 +104,9 @@ class AllTasksFragment : Fragment() {
                         }
 
                         Log.d("AllTasksFragment", "Loading tasks for project ID: $projectId")
-                        taskController.getTasksByProject(projectId).collect { tasks ->
+                        taskController.getAllTasks().collect { tasks ->
+                            Log.d("AllTasksFragment", "Received ${tasks.size} tasks from repository") // 🛠️ Debugging log
+
                             binding.apply {
                                 progressBar.visibility = View.GONE
                                 if (tasks.isEmpty()) {
@@ -118,6 +120,7 @@ class AllTasksFragment : Fragment() {
                                 }
                             }
                         }
+
                     }
                 }
             }

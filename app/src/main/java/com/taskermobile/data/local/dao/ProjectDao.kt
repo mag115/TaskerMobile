@@ -31,4 +31,8 @@ interface ProjectDao {
 
     @Query("UPDATE projects SET isSynced = 1 WHERE id = :projectId")
     suspend fun markProjectAsSynced(projectId: Long?)
+
+    @Query("SELECT * FROM projects WHERE id = :projectId")
+    suspend fun getProjectById(projectId: Long): ProjectEntity?
+
 } 

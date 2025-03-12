@@ -16,8 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?attr/colorPrimary"
-            android:clickable="true"
-            android:focusable="true"
+            android:elevation="4dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -30,17 +29,41 @@
                 android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
                 app:titleTextColor="@android:color/white">
 
+                <!-- Back Button -->
+                <ImageButton
+                    android:id="@+id/backButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_back"
+                    android:contentDescription="Back"
+                    android:padding="8dp"
+                    app:layout_constraintStart_toStartOf="parent"/>  <!-- ✅ Fixed Constraint -->
+
                 <!-- Project Selector in Toolbar -->
                 <com.taskermobile.ui.shared.ProjectSelectorView
                     android:id="@+id/projectSelector"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
                     android:clickable="true"
-                    android:focusable="true" />
+                    android:focusable="true"
+                    app:layout_constraintStart_toEndOf="@id/backButton"
+                    app:layout_constraintEnd_toStartOf="@id/logoutButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+                <!-- Logout Button (Fixed Constraint) -->
+                <Button
+                    android:id="@+id/logoutButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Logout"
+                    android:padding="8dp"
+                    android:textColor="@android:color/white"
+                    app:layout_constraintEnd_toEndOf="parent"/>  <!-- ✅ Fixed Constraint -->
 
             </com.google.android.material.appbar.MaterialToolbar>
-
         </com.google.android.material.appbar.AppBarLayout>
 
         <!-- Fragment Container for Navigation -->
@@ -52,7 +75,7 @@
             app:defaultNavHost="true"
             app:layout_constraintTop_toBottomOf="@id/appBarLayout"
             app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
-            app:navGraph="@navigation/nav_graph" />
+            app:navGraph="@navigation/nav_graph"/>
 
         <!-- Bottom Navigation -->
         <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -60,7 +83,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:menu="@menu/bottom_nav_menu" />
+            app:menu="@menu/bottom_nav_menu"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -71,6 +94,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:headerLayout="@layout/nav_drawer_header"
-        app:menu="@menu/nav_drawer_menu" />
+        app:menu="@menu/nav_drawer_menu"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

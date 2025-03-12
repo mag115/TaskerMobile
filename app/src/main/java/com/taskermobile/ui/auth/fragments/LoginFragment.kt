@@ -51,10 +51,10 @@ class LoginFragment : Fragment() {
             loading = true
             updateLoadingState()
 
-            val email = binding.emailInput.text.toString()
+            val username = binding.usernameInput.text.toString() // 🔥 Use username, not email
             val password = binding.passwordInput.text.toString()
 
-            authController.login(email, password) { success, message ->
+            authController.login(username, password) { success, message ->
                 loading = false
                 activity?.runOnUiThread {
                     updateLoadingState()
@@ -69,6 +69,7 @@ class LoginFragment : Fragment() {
                 }
             }
         }
+
 
         binding.signupLink.setOnClickListener {
             parentFragmentManager.beginTransaction()
