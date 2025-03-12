@@ -78,7 +78,6 @@ class MainActivity : AppCompatActivity() {
 
         // Instantiate ProjectRepository
         val projectDao = (application as TaskerApplication).database.projectDao()
-        // Create the service using your SessionManager
         val projectService = RetrofitClient.createService<com.taskermobile.data.service.ProjectService>(sessionManager)
         val projectRepository = com.taskermobile.data.repository.ProjectRepository(projectService, projectDao)
 
@@ -98,6 +97,21 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Error loading projects: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Continuously collect updates from the local database
+        lifecycleScope.launch {
+            projectRepository.getLocalProjects().collect { projects ->
+                if (projects.isNotEmpty()) {
+                    projectSelector.setProjects(projects)
+                    // Optionally, update the current project if none is set
+                    if (projectSelector.getCurrentProject() == null) {
+                        projectSelector.setCurrentProject(projects.first())
+                    }
+                } else {
+                    Toast.makeText(this@MainActivity, "No projects available", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 

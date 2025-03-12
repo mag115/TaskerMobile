@@ -58,6 +58,8 @@ class ProjectSelectorView @JvmOverloads constructor(
         }
     }
 
+    fun getCurrentProject(): Project? = currentProject
+
     fun setProjects(newProjects: List<Project>) {
         projects = newProjects
     }
