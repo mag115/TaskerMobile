@@ -2,12 +2,17 @@ package com.taskermobile.data.local.dao
 
 import androidx.room.*
 import com.taskermobile.data.local.entity.ProjectEntity
+import com.taskermobile.data.local.relations.ProjectWithTasks
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProjectDao {
     @Query("SELECT * FROM projects")
     fun getAllProjects(): Flow<List<ProjectEntity>>
+
+    @Transaction
+    @Query("SELECT * FROM projects")
+    fun getProjectsWithTasks(): Flow<List<ProjectWithTasks>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProjects(projects: List<ProjectEntity>)

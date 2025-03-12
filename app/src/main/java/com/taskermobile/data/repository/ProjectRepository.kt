@@ -14,8 +14,13 @@ class ProjectRepository(
     private val projectDao: ProjectDao
 ) {
     fun getLocalProjects(): Flow<List<Project>> {
-        return projectDao.getAllProjects().map { entities ->
-            entities.map { it.toDomain() }
+        return projectDao.getProjectsWithTasks().map { list ->
+            list.map { projectWithTasks ->
+                // Map ProjectEntity to Project and inject the tasks list.
+                projectWithTasks.project.toDomain().copy(
+                    tasks = projectWithTasks.tasks.map { it.toTask() }
+                )
+            }
         }
     }
 
