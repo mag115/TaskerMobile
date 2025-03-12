@@ -18,7 +18,8 @@ class TaskController(context: Context, sessionManager: SessionManager) {
     private val taskDao = database.taskDao()
     private val projectDao = database.projectDao()
     private val userDao = database.userDao()
-    private val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao)
+    private val notificationDao=database.notificationDao()
+    private val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao, notificationDao)
 
     suspend fun createTask(task: Task): Result<Task> {
         return try {

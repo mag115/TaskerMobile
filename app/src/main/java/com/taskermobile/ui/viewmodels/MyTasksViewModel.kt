@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.local.dao.TaskDao
+import com.taskermobile.data.local.entity.NotificationEntity
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.repository.TaskRepository
 import com.taskermobile.data.session.SessionManager
@@ -34,6 +35,23 @@ class MyTasksViewModel(
         }
     }
 
+
+    fun sendComment(task: Task, comment: String) {
+        viewModelScope.launch {
+            taskRepository.addCommentToTask(task.id ?: 0L, comment)
+
+            // Notify all members
+            val notification = NotificationEntity(
+                message = "New comment on task '${task.title}': $comment",
+                timestamp = System.currentTimeMillis(),
+                isRead = false,
+                id=task.id ?: 0L
+            )
+            taskRepository.addNotification(notification)
+        }
+    }
+
+ 
     override fun updateTaskInDatabaseAndBackend(task: Task) {
         viewModelScope.launch {
             val taskEntity = TaskEntity.fromTask(task)

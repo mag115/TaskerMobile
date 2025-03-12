@@ -39,6 +39,7 @@ data class TaskEntity(
     val progress: Double?,
     val manualProgress: Double?,
     val isDeleted: Boolean = false,
+    var comments: MutableList<String> = mutableListOf(),
 
     @ColumnInfo(name = "projectId")
     val projectId: Long,

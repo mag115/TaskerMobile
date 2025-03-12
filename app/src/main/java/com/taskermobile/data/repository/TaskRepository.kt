@@ -14,12 +14,15 @@ import retrofit2.HttpException
 import android.util.Log
 import com.taskermobile.data.local.mapper.toEntity
 import kotlinx.coroutines.flow.flow
+import com.taskermobile.data.local.dao.NotificationDao
+import com.taskermobile.data.local.entity.NotificationEntity
 
 class TaskRepository(
     private val taskDao: TaskDao,
     private val taskService: TaskService,
     private val projectDao: ProjectDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val notificationDao: NotificationDao
 ) {
 
     private suspend fun refreshTasks() {
@@ -73,6 +76,18 @@ class TaskRepository(
         } catch (e: Exception) {
             Log.e("TaskRepository", "Error syncing task with server", e)
         }
+    }
+
+    suspend fun addCommentToTask(taskId: Long, comment: String) {
+        val task = taskDao.getTaskById(taskId)
+        if (task != null) {
+            task.comments.add(comment)
+            taskDao.updateTask(task)
+        }
+    }
+
+    suspend fun addNotification(notification: NotificationEntity) {
+        notificationDao.insertNotification(notification)
     }
 
 

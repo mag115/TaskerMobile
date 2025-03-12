@@ -72,11 +72,18 @@ class AllTasksFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
+
         // Pass the viewModel (which implements TaskUpdater) to the adapter
-        taskAdapter = TaskAdapter({ task ->
-            // Timer click logic if needed
-        }, viewModel)
-        binding.tasksRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+         taskAdapter = TaskAdapter(
+            { task ->
+                // Handle task timer click here
+            },
+            { task, comment ->
+                viewModel.sendComment(task, comment)
+            },
+            viewModel
+        )
+
         binding.tasksRecyclerView.adapter = taskAdapter
     }
 
