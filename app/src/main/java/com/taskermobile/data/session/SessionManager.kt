@@ -51,7 +51,7 @@ class SessionManager(private val context: Context) {
         }
     }
 
-    // Save and retrieve current project by its ID (if needed)
+    // Save and retrieve current project by its ID
     suspend fun saveCurrentProjectId(projectId: Long) {
         context.dataStore.edit { preferences ->
             preferences[CURRENT_PROJECT_ID_KEY] = projectId
@@ -63,7 +63,7 @@ class SessionManager(private val context: Context) {
     }
 
     suspend fun saveCurrentProject(project: Project) {
-        // Save full project as JSON if needed
+        // Save full project as JSON
         val gson = Gson()
         val json = gson.toJson(project)
         context.dataStore.edit { preferences ->
@@ -78,7 +78,6 @@ class SessionManager(private val context: Context) {
         return Gson().fromJson(json, Project::class.java)
     }
 
-    // (Other methods remain unchanged...)
     suspend fun saveUserInfo(userId: Long, username: String) {
         context.dataStore.edit { preferences ->
             preferences[USERNAME_KEY] = username

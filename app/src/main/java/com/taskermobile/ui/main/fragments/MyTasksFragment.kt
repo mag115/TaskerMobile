@@ -54,7 +54,7 @@ class MyTasksFragment : Fragment() {
 
         // Pass the viewModel to the adapter
         adapter = TaskAdapter({ task ->
-            // Here you can call whatever is necessary for each task click
+            // call whatever is necessary for each task click
             // Timer click logic
         }, viewModel)
 

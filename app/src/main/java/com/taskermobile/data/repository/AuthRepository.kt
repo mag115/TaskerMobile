@@ -23,7 +23,7 @@ class AuthRepository(
             val response = authApiService.login(LoginRequest(username, password))
             if (response.isSuccessful) {
                 response.body()?.let { loginResponse ->
-                    if (loginResponse.token.isNotEmpty()) {  // 🔥 Check if token is valid
+                    if (loginResponse.token.isNotEmpty()) {  // Check if token is valid
                         return Result.success(loginResponse)
                     }
                 }
@@ -40,7 +40,7 @@ class AuthRepository(
 
     suspend fun signup(signupRequest: SignupRequest): Result<LoginResponse> {
         return try {
-            val response = authApiService.signup(signupRequest) // ✅ Correctly pass SignupRequest object
+            val response = authApiService.signup(signupRequest)
             if (response.isSuccessful) {
                 val signupResponse = response.body()
                 if (signupResponse != null) {

@@ -23,7 +23,7 @@ class AuthController(
      */
     fun login(username: String, password: String, onResult: (Boolean, String?) -> Unit) {
         coroutineScope.launch {
-            val result = repository.login(username, password) // 🔥 Change from email to username
+            val result = repository.login(username, password)
             result.fold(
                 onSuccess = { loginResponse ->
                     Log.d("AuthController", "Login successful: $loginResponse")
@@ -32,7 +32,7 @@ class AuthController(
                         expiresIn = loginResponse.expiresIn,
                         userId = loginResponse.userId,
                         username = loginResponse.username,
-                        role = loginResponse.role  // ✅ Ensure role is saved
+                        role = loginResponse.role  // Ensure role is saved
                     )
                     withContext(Dispatchers.Main) {
                         onResult(true, null)
@@ -58,12 +58,12 @@ class AuthController(
         username: String,
         email: String,
         password: String,
-        role: String, // ✅ Include role
+        role: String,
         onResult: (Boolean, String?) -> Unit
     ) {
         coroutineScope.launch {
-            val signupRequest = SignupRequest(username, email, password, role) // ✅ Wrap parameters in object
-            val result = repository.signup(signupRequest) // ✅ Pass as single object
+            val signupRequest = SignupRequest(username, email, password, role) // Wrap parameters in object
+            val result = repository.signup(signupRequest) // Pass as single object
 
             result.fold(
                 onSuccess = { signupResponse ->
@@ -96,13 +96,13 @@ class AuthController(
     /**
      * Handle logout
      */
-    fun logout(context: Context) { // 🔥 Pass context from activity
+    fun logout(context: Context) { // Pass context from activity
         coroutineScope.launch {
             sessionManager.clearSession()
             withContext(Dispatchers.Main) {
                 val intent = Intent(context, AuthActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                context.startActivity(intent) // ✅ Fix the issue
+                context.startActivity(intent) // Fix the issue
             }
             Log.d("AuthController", "User logged out")
         }

@@ -31,15 +31,15 @@ class NotificationWorker(
                 val newNotifications = result.getOrNull()?.filter { !it.isRead } ?: emptyList()
 
                 if (newNotifications.isNotEmpty()) {
-                    showNotification(newNotifications.size) // 🔔 Show local notification
+                    showNotification(newNotifications.size) // Show local notification
                 }
 
                 Result.success()
             } else {
-                Result.retry() // 🔁 Retry if the fetch fails
+                Result.retry() // Retry if the fetch fails
             }
         } catch (e: Exception) {
-            Result.retry() // 🔁 Retry in case of an exception
+            Result.retry() //Retry in case of an exception
         }
     }
 
@@ -47,7 +47,7 @@ class NotificationWorker(
         val channelId = "tasker_notifications"
         val notificationId = 1
 
-        // ✅ Ensure the channel is created on Android 8+
+        //Ensure the channel is created on Android 8+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -61,18 +61,18 @@ class NotificationWorker(
             manager.createNotificationChannel(channel)
         }
 
-        // ✅ Check for Notification Permission (Android 13+)
+        // Check for Notification Permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permissionGranted = applicationContext.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
                     android.content.pm.PackageManager.PERMISSION_GRANTED
             if (!permissionGranted) {
-                return // ❌ Exit early if permission is NOT granted
+                return // Exit early if permission is NOT granted
             }
         }
 
-        // ✅ Build Notification
+        // Build Notification
         val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(R.drawable.ic_notification) // Ensure `ic_notification.xml` exists in `res/drawable`
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("New Tasker Notifications")
             .setContentText("You have $unreadCount unread notifications")
             .setPriority(NotificationCompat.PRIORITY_HIGH)

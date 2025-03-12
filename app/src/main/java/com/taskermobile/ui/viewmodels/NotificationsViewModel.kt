@@ -14,14 +14,14 @@ class NotificationsViewModel(private val notificationRepository: NotificationRep
     val unreadCount: LiveData<Int> get() = _unreadCount
 
     init {
-        fetchNotifications() // ✅ Auto-fetch when ViewModel is created
+        fetchNotifications() //Auto-fetch when ViewModel is created
     }
 
     fun fetchNotifications() {
         viewModelScope.launch {
             notificationRepository.getLocalNotifications().collect { notifications ->
                 _notifications.postValue(notifications)
-                _unreadCount.postValue(notifications.count { !it.isRead }) // ✅ Count unread
+                _unreadCount.postValue(notifications.count { !it.isRead }) // Count unread
             }
         }
     }
@@ -29,11 +29,11 @@ class NotificationsViewModel(private val notificationRepository: NotificationRep
     fun markAsRead(notification: NotificationEntity) {
         viewModelScope.launch {
             notificationRepository.markNotificationAsRead(notification.id)
-            fetchNotifications() // ✅ Refresh list after marking as read
+            fetchNotifications() // Refresh list after marking as read
         }
     }
 
-    // ✅ Add a Factory for dependency injection
+    // Add a Factory for dependency injection
     class Factory(private val repository: NotificationRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(NotificationsViewModel::class.java)) {

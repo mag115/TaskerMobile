@@ -46,7 +46,7 @@ class ReportDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupDependencies()
         initViewModel() // Initialize the viewModel here
-        setupRecyclerView() // Now viewModel is available to pass to the adapter
+        setupRecyclerView() // viewModel is available to pass to the adapter
         loadReportDetails(args.reportId)
     }
 

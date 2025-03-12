@@ -11,7 +11,5 @@ data class ProjectReportEntity(
     val id: Long?,
     val reportDate: String?,
     val overallPerformance: String?,
-    // For tasks, you can store them as a serialized String (JSON) or in a separate table
-    // using relationships. For simplicity, we can use a converter to store them in one column.
     val tasksJson: String? // Using converter to store tasks
 )
