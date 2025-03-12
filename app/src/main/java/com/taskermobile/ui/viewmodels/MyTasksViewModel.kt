@@ -35,7 +35,7 @@ class MyTasksViewModel(
         }
     }
 
-<<<<<<< HEAD
+
     fun sendComment(task: Task, comment: String) {
         viewModelScope.launch {
             taskRepository.addCommentToTask(task.id ?: 0L, comment)
@@ -51,10 +51,8 @@ class MyTasksViewModel(
         }
     }
 
-    fun updateTaskInDatabaseAndBackend(task: Task) {
-=======
+ 
     override fun updateTaskInDatabaseAndBackend(task: Task) {
->>>>>>> e2db3df90dc2ef5f9ae4bd1ed933e8090134723b
         viewModelScope.launch {
             val taskEntity = TaskEntity.fromTask(task)
             // Update task in local database

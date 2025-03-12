@@ -75,7 +75,6 @@ class ReportDetailFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-<<<<<<< HEAD
         taskAdapter = TaskAdapter(
             { task ->
                 // Handle task timer click here
@@ -85,12 +84,7 @@ class ReportDetailFragment : Fragment() {
             },
             viewModel // ✅ Pass ViewModel correctly
         ) // Remove the timer logic from the adapter
-=======
-        // Create the adapter passing the viewModel (which implements task updates)
-        taskAdapter = TaskAdapter({ task ->
-            // Timer click logic can be added here if needed.
-        }, viewModel)
->>>>>>> e2db3df90dc2ef5f9ae4bd1ed933e8090134723b
+
         binding.tasksRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = taskAdapter
