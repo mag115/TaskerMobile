@@ -19,8 +19,10 @@ import androidx.navigation.ui.*
 import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
+import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
+import com.taskermobile.ui.shared.ProjectSelectorView
 import com.taskermobile.workers.NotificationWorker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -46,7 +48,47 @@ class MainActivity : AppCompatActivity() {
         setupToolbar()  // ✅ Added setupToolbar() function
         setupNavigation()
         requestNotificationPermission()
+        setupProjectSelector()
     }
+
+    private fun setupProjectSelector() {
+        // Get your ProjectSelectorView from the toolbar (it’s defined in your MaterialToolbar)
+        val projectSelector = findViewById<ProjectSelectorView>(R.id.projectSelector)
+
+        // Instantiate ProjectRepository
+        val projectDao = (application as TaskerApplication).database.projectDao()
+        // Create the service using your SessionManager
+        val projectService = RetrofitClient.createService<com.taskermobile.data.service.ProjectService>(sessionManager)
+        val projectRepository = com.taskermobile.data.repository.ProjectRepository(projectService, projectDao)
+
+        // Now load the projects from the repository.
+        lifecycleScope.launch {
+            try {
+                // Use .first() to get the current list from the Flow
+                val projects = projectRepository.getLocalProjects().first()
+                println("Loaded projects: ${projects.size}")
+                if (projects.isNotEmpty()) {
+                    projectSelector.setProjects(projects)
+                    projectSelector.setCurrentProject(projects.first())
+                } else {
+                    // Optionally, you can call a refresh method to load from remote.
+                    // For example: projectRepository.refreshProjects()
+                    Toast.makeText(this@MainActivity, "No projects available", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "Error loading projects: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Set the listener to update global state when a project is selected.
+        projectSelector.setOnProjectSelectedListener { selectedProject ->
+            lifecycleScope.launch {
+                sessionManager.saveCurrentProject(selectedProject)
+            }
+            Toast.makeText(this, "Switched to project: ${selectedProject.name}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     private fun setupDependencies() {
         sessionManager = SessionManager(this)

@@ -2,10 +2,12 @@ package com.taskermobile.ui.shared
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.widget.PopupMenu
+import com.taskermobile.R
 import com.taskermobile.data.model.Project
 import com.taskermobile.databinding.LayoutProjectSelectorBinding
 
@@ -37,13 +39,13 @@ class ProjectSelectorView @JvmOverloads constructor(
     }
 
     private fun showProjectsPopup(anchorView: View) {
-        PopupMenu(context, anchorView).apply {
+        val wrapper = ContextThemeWrapper(context, R.style.CustomPopupMenu)
+        PopupMenu(wrapper, anchorView).apply {
             projects.forEach { project ->
                 menu.add(project.name).apply {
                     isEnabled = project.id != currentProject?.id
                 }
             }
-            
             setOnMenuItemClickListener { menuItem ->
                 val selectedProject = projects.find { it.name == menuItem.title }
                 selectedProject?.let {
@@ -52,7 +54,6 @@ class ProjectSelectorView @JvmOverloads constructor(
                 }
                 true
             }
-            
             show()
         }
     }
