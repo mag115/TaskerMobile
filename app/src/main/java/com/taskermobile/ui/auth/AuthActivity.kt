@@ -2,6 +2,7 @@ package com.taskermobile.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.taskermobile.R
@@ -21,31 +22,28 @@ class AuthActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize dependencies
+
         sessionManager = SessionManager(this)
         authRepository = AuthRepository(RetrofitClient.authApiService)
         authController = AuthController(authRepository, sessionManager)
 
-        // Check if user is already logged in with valid token
         lifecycleScope.launch {
             val isTokenValid = sessionManager.authState.first()
+            Log.d("AuthActivity", "Checking auth state: $isTokenValid") // 🔥 Debugging log
+
             if (isTokenValid) {
-                // Valid token exists, redirect to MainActivity
+                Log.d("AuthActivity", "Token valid, redirecting to MainActivity")
                 startActivity(Intent(this@AuthActivity, MainActivity::class.java))
                 finish()
-                return@launch
-            }
-
-            // If no valid token, continue with auth flow
-            setContentView(R.layout.activity_auth)
-
-            // Set up the default fragment (Welcome)
-            if (savedInstanceState == null) {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.auth_container, WelcomeFragment())
-                    .commit()
+            } else {
+                setContentView(R.layout.activity_auth)
+                if (savedInstanceState == null) {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.auth_container, WelcomeFragment())
+                        .commit()
+                }
             }
         }
     }
+
 } 

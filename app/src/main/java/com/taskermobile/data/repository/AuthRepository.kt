@@ -18,18 +18,16 @@ class AuthRepository(
 ) {
     private val authTokenKey = stringPreferencesKey("auth_token")
 
-    suspend fun login(email: String, password: String): Result<LoginResponse> {
+    suspend fun login(username: String, password: String): Result<LoginResponse> {
         return try {
-            val response = withContext(Dispatchers.IO) {
-                authApiService.login(LoginRequest(email, password))
-            }
+            val response = authApiService.login(LoginRequest(username, password))
             if (response.isSuccessful) {
-                val loginResponse = response.body()
-                if (loginResponse != null && loginResponse.token != null) {
-                    Result.success(loginResponse) // Correctly return LoginResponse
-                } else {
-                    Result.failure(Exception("Empty login response or missing token"))
+                response.body()?.let { loginResponse ->
+                    if (loginResponse.token.isNotEmpty()) {  // 🔥 Check if token is valid
+                        return Result.success(loginResponse)
+                    }
                 }
+                Result.failure(Exception("Invalid login response"))
             } else {
                 Result.failure(Exception("Login failed: ${response.code()} - ${response.message()}"))
             }
@@ -37,6 +35,7 @@ class AuthRepository(
             Result.failure(Exception("Network error: ${e.localizedMessage}"))
         }
     }
+
 
 
     suspend fun signup(signupRequest: SignupRequest): Result<LoginResponse> {

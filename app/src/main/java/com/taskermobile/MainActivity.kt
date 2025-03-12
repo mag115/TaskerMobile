@@ -14,14 +14,17 @@ import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
 import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
+import com.taskermobile.ui.auth.controllers.AuthController
 import com.taskermobile.ui.shared.ProjectSelectorView
 import com.taskermobile.workers.NotificationWorker
 import kotlinx.coroutines.flow.first
@@ -34,6 +37,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var sessionManager: SessionManager
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var authController: AuthController
+
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATIONS = 1001
@@ -45,10 +50,30 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupDependencies()
-        setupToolbar()  // ✅ Added setupToolbar() function
+        setupToolbar()
         setupNavigation()
         requestNotificationPermission()
         setupProjectSelector()
+
+        binding.navigationView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.navigation_project_report -> {
+                    // Pop the back stack up to the graph's start destination,
+                    // then navigate to the report list destination.
+                    val navOptions = NavOptions.Builder()
+                        // Clear everything so that we start fresh.
+                        .setPopUpTo(navController.graph.startDestinationId, true)
+                        .build()
+                    navController.navigate(R.id.navigation_project_report, null, navOptions)
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                else -> {
+                    // For all other items, use the default behavior.
+                    NavigationUI.onNavDestinationSelected(menuItem, navController)
+                }
+            }
+        }
     }
 
     private fun setupProjectSelector() {
@@ -57,7 +82,6 @@ class MainActivity : AppCompatActivity() {
 
         // Instantiate ProjectRepository
         val projectDao = (application as TaskerApplication).database.projectDao()
-        // Create the service using your SessionManager
         val projectService = RetrofitClient.createService<com.taskermobile.data.service.ProjectService>(sessionManager)
         val projectRepository = com.taskermobile.data.repository.ProjectRepository(projectService, projectDao)
 
@@ -80,6 +104,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Continuously collect updates from the local database
+        lifecycleScope.launch {
+            projectRepository.getLocalProjects().collect { projects ->
+                if (projects.isNotEmpty()) {
+                    projectSelector.setProjects(projects)
+                    // Optionally, update the current project if none is set
+                    if (projectSelector.getCurrentProject() == null) {
+                        projectSelector.setCurrentProject(projects.first())
+                    }
+                } else {
+                    Toast.makeText(this@MainActivity, "No projects available", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         // Set the listener to update global state when a project is selected.
         projectSelector.setOnProjectSelectedListener { selectedProject ->
             lifecycleScope.launch {
@@ -92,13 +131,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupDependencies() {
         sessionManager = SessionManager(this)
+
+        // Initialize AuthController
+        val authRepository = AuthRepository(RetrofitClient.authApiService)
+        authController = AuthController(authRepository, sessionManager)
     }
 
-    private fun setupToolbar() {
-        setSupportActionBar(binding.toolbar) // ✅ Ensures it's used as ActionBar
 
-        // ✅ Get the buttons from the correct layout (NOT directly from toolbar)
-        val logoutButton = findViewById<Button>(R.id.logoutButton)
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+
+        val logoutButton = findViewById<Button>(R.id.logoutButton) // ✅ Now correctly referenced
         val backButton = findViewById<ImageButton>(R.id.backButton)
 
         backButton?.setOnClickListener {
@@ -108,11 +151,13 @@ class MainActivity : AppCompatActivity() {
         logoutButton?.setOnClickListener {
             lifecycleScope.launch {
                 sessionManager.clearSession()
+                authController.logout(this@MainActivity) // ✅ Ensure logout works
                 Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
     }
+
 
     private fun setupNavigation() {
         drawerLayout = binding.drawerLayout
@@ -127,7 +172,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_my_tasks,
                 R.id.navigation_all_tasks,
                 R.id.navigation_notifications,
-                R.id.navigation_projects
+                R.id.navigation_projects,
+                R.id.navigation_project_report
             ), drawerLayout
         )
 

@@ -12,6 +12,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE (projectId = :projectId OR :projectId = 0) AND (isDeleted IS NULL OR isDeleted = 0)")
     fun getTasksByProject(projectId: Long): Flow<List<TaskEntity>>
 
+    @Query("DELETE FROM tasks WHERE projectId = :projectId")
+    suspend fun deleteTasksByProject(projectId: Long)
+
     @Query("SELECT * FROM tasks WHERE (projectId = :projectId)")
     fun getAssignedTasks(projectId: Long): Flow<List<TaskEntity>>
 

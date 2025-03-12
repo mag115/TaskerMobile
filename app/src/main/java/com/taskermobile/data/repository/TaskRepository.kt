@@ -44,10 +44,20 @@ class TaskRepository(
 
     suspend fun insertTask(task: Task) {
         val taskEntity = TaskEntity.fromTask(task)
-        Log.d("TaskRepository", "Inserting task: ${taskEntity}")
+
+        Log.d("TaskRepository", "Attempting to insert task: $taskEntity") // 🛠️ Debugging log
+
         taskDao.insertTask(taskEntity)
+
+        val insertedTask = taskDao.getTaskById(taskEntity.id ?: -1)
+        Log.d("TaskRepository", "Inserted Task from DB: $insertedTask") // 🛠️ Confirm insertion
+
         syncTaskWithBackend(taskEntity)
     }
+
+
+
+
     private suspend fun syncTaskWithBackend(task: TaskEntity) {
         try {
             //send task to the server using Retrofit API
@@ -143,8 +153,12 @@ class TaskRepository(
 
     fun getAllTasks(): Flow<List<Task>> {
         return taskDao.getAllTasks()
-            .map { entities -> entities.map { it.toTask() } } // Convert from TaskEntity to Task
+            .map { entities ->
+                Log.d("TaskRepository", "Emitting ${entities.size} tasks from DB") // 🛠️ Debugging log
+                entities.map { it.toTask() }
+            }
     }
+
 
     fun getAllTasksForUser(username: String): Flow<List<Task>> {
         return flow {

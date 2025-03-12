@@ -1,9 +1,12 @@
 package com.taskermobile.ui.auth.controllers
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import com.taskermobile.data.model.SignupRequest
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
+import com.taskermobile.ui.auth.AuthActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,9 +21,9 @@ class AuthController(
     /**
      * Handle user login
      */
-    fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    fun login(username: String, password: String, onResult: (Boolean, String?) -> Unit) {
         coroutineScope.launch {
-            val result = repository.login(email, password)
+            val result = repository.login(username, password) // 🔥 Change from email to username
             result.fold(
                 onSuccess = { loginResponse ->
                     Log.d("AuthController", "Login successful: $loginResponse")
@@ -44,6 +47,7 @@ class AuthController(
             )
         }
     }
+
 
 
     /**
@@ -92,10 +96,16 @@ class AuthController(
     /**
      * Handle logout
      */
-    fun logout() {
+    fun logout(context: Context) { // 🔥 Pass context from activity
         coroutineScope.launch {
             sessionManager.clearSession()
+            withContext(Dispatchers.Main) {
+                val intent = Intent(context, AuthActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                context.startActivity(intent) // ✅ Fix the issue
+            }
             Log.d("AuthController", "User logged out")
         }
     }
 }
+
