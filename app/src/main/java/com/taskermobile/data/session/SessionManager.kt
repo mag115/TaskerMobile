@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.taskermobile.data.model.Project
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -29,7 +30,7 @@ class SessionManager(private val context: Context) {
     val userId = context.dataStore.data.map { it[USER_ID_KEY] }
     val username = context.dataStore.data.map { it[USERNAME_KEY] }
     val role = context.dataStore.data.map { it[ROLE_KEY] }
-    val currentProjectId = context.dataStore.data.map { it[CURRENT_PROJECT_ID_KEY] }
+    val currentProjectId: Flow<Long?> = context.dataStore.data.map { it[CURRENT_PROJECT_ID_KEY] }
     val authToken = context.dataStore.data.map { it[AUTH_TOKEN_KEY] }
 
     // Save login details...
@@ -61,15 +62,14 @@ class SessionManager(private val context: Context) {
         return context.dataStore.data.first()[CURRENT_PROJECT_ID_KEY]
     }
 
-    // New: Save the full Project object (as JSON)
     suspend fun saveCurrentProject(project: Project) {
+        // Save full project as JSON if needed
         val gson = Gson()
         val json = gson.toJson(project)
         context.dataStore.edit { preferences ->
             preferences[CURRENT_PROJECT_KEY] = json
+            preferences[CURRENT_PROJECT_ID_KEY] = project.id ?: 0L
         }
-        // Optionally also save the project ID:
-        saveCurrentProjectId(project.id ?: 0L)
     }
 
     // New: Retrieve the current Project object

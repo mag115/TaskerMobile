@@ -23,6 +23,7 @@ import com.taskermobile.data.local.TaskerDatabase
 import com.taskermobile.databinding.FragmentCreateTaskBinding
 import com.taskermobile.ui.viewmodels.CreateTaskViewModel
 import com.taskermobile.ui.viewmodels.CreateTaskViewModelFactory
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
@@ -151,35 +152,44 @@ class CreateTaskFragment : Fragment() {
         binding.createTaskButton.setOnClickListener {
             if (!validateInputs()) return@setOnClickListener
 
-            val task = Task(
-                title = binding.titleInput.text.toString(),
-                description = binding.descriptionInput.text.toString(),
-                deadline = selectedDeadline?.format(DateTimeFormatter.ISO_DATE_TIME),
-                priority = binding.prioritySpinner.selectedItem.toString(),
-                status = binding.statusSpinner.selectedItem.toString(),
-                estimatedDuration = binding.durationInput.text.toString().toDoubleOrNull() ?: 0.0,
-                effortPercentage = binding.effortInput.text.toString().toDoubleOrNull() ?: 0.0,
-                dependency = binding.dependencyInput.text.toString().toLongOrNull(),
-                projectId = 1L, // Default project ID
-                assignedUserId = selectedUserId, // Assign selected user
-                reminderSent = false,
-                estimatedWeeks = null,
-                progressStatus = null,
-                progress = null,
-                manualProgress = null,
-                isDeleted = false,
-                project = null,
-                assignedUser = null,
-                timeSpent = 0.0,
-                elapsedTime = 0.0,
-                scheduledProgress = null
-            )
+            // Launch a coroutine to read the current project ID
+            viewLifecycleOwner.lifecycleScope.launch {
+                // Retrieve the current project ID from the session
+                val currentProjectId = sessionManager.currentProjectId.first()
+                if (currentProjectId == null || currentProjectId == 0L) {
+                    Toast.makeText(requireContext(), "No project selected", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
 
-            lifecycleScope.launch {
+                // Build the task, using the current project ID
+                val task = Task(
+                    title = binding.titleInput.text.toString(),
+                    description = binding.descriptionInput.text.toString(),
+                    deadline = selectedDeadline?.format(DateTimeFormatter.ISO_DATE_TIME),
+                    priority = binding.prioritySpinner.selectedItem.toString(),
+                    status = binding.statusSpinner.selectedItem.toString(),
+                    estimatedDuration = binding.durationInput.text.toString().toDoubleOrNull() ?: 0.0,
+                    effortPercentage = binding.effortInput.text.toString().toDoubleOrNull() ?: 0.0,
+                    dependency = binding.dependencyInput.text.toString().toLongOrNull(),
+                    projectId = currentProjectId, // Use the current project ID from SessionManager
+                    assignedUserId = selectedUserId, // Assign selected user
+                    reminderSent = false,
+                    estimatedWeeks = null,
+                    progressStatus = null,
+                    progress = null,
+                    manualProgress = null,
+                    isDeleted = false,
+                    project = null,
+                    assignedUser = null,
+                    timeSpent = 0.0,
+                    elapsedTime = 0.0,
+                    scheduledProgress = null
+                )
+
                 try {
                     showLoading(true)
                     viewModel.createTask(task)
-                    Toast.makeText(context, "Task created successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Task created successfully", Toast.LENGTH_SHORT).show()
                     parentFragmentManager.popBackStack()
                 } catch (e: Exception) {
                     binding.errorText.text = e.message

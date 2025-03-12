@@ -17,6 +17,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 
 class AllTasksFragment : Fragment() {
     private var _binding: FragmentAllTasksBinding? = null
@@ -73,7 +75,7 @@ class AllTasksFragment : Fragment() {
                         taskController.refreshProjectTasks(projectId)
                     }
                 } catch (e: Exception) {
-                    Log.e("TasksFragment", "Error syncing tasks: ${e.message}")
+                    Log.e("AllTasksFragment", "Error syncing tasks: ${e.message}")
                 } finally {
                     binding.swipeRefresh.isRefreshing = false
                 }
@@ -82,17 +84,17 @@ class AllTasksFragment : Fragment() {
     }
 
     private fun observeProjectChanges() {
-        // Single coroutine to handle both project changes and task loading
         viewLifecycleOwner.lifecycleScope.launch {
-            sessionManager.currentProjectId.collect { projectId ->
-                loadTasksJob?.cancel() // Cancel any existing task loading
-                loadTasksJob = launch {
-                    try {
-                        _binding?.progressBar?.visibility = View.VISIBLE
-                        _binding?.emptyStateText?.visibility = View.GONE
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sessionManager.currentProjectId.collect { projectId ->
+                    loadTasksJob?.cancel()
+                    loadTasksJob = launch {
+                        // Now it's safe to use binding because this block is active only when view is STARTED
+                        binding.progressBar.visibility = View.VISIBLE
+                        binding.emptyStateText.visibility = View.GONE
 
-                        if (projectId == null) {
-                            _binding?.apply {
+                        if (projectId == null || projectId == 0L) {
+                            binding.apply {
                                 progressBar.visibility = View.GONE
                                 emptyStateText.visibility = View.VISIBLE
                                 emptyStateText.text = "No project selected"
@@ -101,10 +103,9 @@ class AllTasksFragment : Fragment() {
                             return@launch
                         }
 
-                        Log.d("TasksFragment", "Loading tasks for project ID: $projectId")
-
+                        Log.d("AllTasksFragment", "Loading tasks for project ID: $projectId")
                         taskController.getTasksByProject(projectId).collect { tasks ->
-                            _binding?.apply {
+                            binding.apply {
                                 progressBar.visibility = View.GONE
                                 if (tasks.isEmpty()) {
                                     emptyStateText.visibility = View.VISIBLE
@@ -117,26 +118,12 @@ class AllTasksFragment : Fragment() {
                                 }
                             }
                         }
-                    } catch (e: Exception) {
-                        when (e) {
-                            is kotlinx.coroutines.CancellationException -> {
-                                Log.d("TasksFragment", "Task loading cancelled")
-                                // Don't show error UI for normal cancellation
-                            }
-                            else -> {
-                                _binding?.apply {
-                                    progressBar.visibility = View.GONE
-                                    emptyStateText.visibility = View.VISIBLE
-                                    emptyStateText.text = e.message ?: "Error loading tasks"
-                                    tasksRecyclerView.visibility = View.GONE
-                                }
-                            }
-                        }
                     }
                 }
             }
         }
     }
+
 
     override fun onDestroyView() {
         loadTasksJob?.cancel()

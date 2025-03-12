@@ -74,62 +74,42 @@ class TaskRepository(
 
     fun getTasksByProject(projectId: Long): Flow<List<Task>> {
         Log.d("TaskRepository", "Setting up flow for project ID: $projectId")
-        return taskDao.getAssignedTasks(projectId)
-            .map { entities -> 
+        return taskDao.getTasksByProject(projectId)
+            .map { entities ->
                 Log.d("TaskRepository", "Mapping ${entities.size} entities from database")
-                entities.forEach { entity ->
-                    Log.d("TaskRepository", "Entity in DB - ID: ${entity.id}, Title: ${entity.title}, ProjectId: ${entity.projectId}")
-                }
                 entities.map { it.toTask() }
             }
-            .onStart { 
+            .onStart {
                 try {
-                    Log.d("TaskRepository", "Starting flow, fetching from API for project: $projectId")
+                    Log.d("TaskRepository", "Starting flow, fetching tasks from API for project: $projectId")
                     val response = taskService.getAllTasks(projectId)
-                    Log.d("TaskRepository", "Response: ${response.body()}")
                     if (response.isSuccessful) {
                         response.body()?.let { tasks ->
-                            Log.d("TaskRepository", "Received ${tasks.size} tasks from API")
-                            
-                            // Filter tasks that belong to the requested project
-                            val filteredTasks = tasks.filter { task -> 
+                            // Filter tasks by project (if necessary)
+                            val filteredTasks = tasks.filter { task ->
                                 val taskProjectId = task.project?.id ?: task.projectId
                                 taskProjectId == projectId
                             }
-
-                            if (filteredTasks.isEmpty()) {
-                                Log.d("TaskRepository", "No tasks found for project $projectId")   
-                            }
-
-                            // Convert to entities and save
+                            Log.d("TaskRepository", "API returned ${filteredTasks.size} tasks for project $projectId")
+                            // Convert to entities and update local cache
                             val entities = filteredTasks.map { task ->
                                 TaskEntity.fromTask(task.copy(projectId = projectId)).copy(isSynced = true)
                             }
-                            
                             if (entities.isNotEmpty()) {
                                 taskDao.insertTasks(entities)
                                 Log.d("TaskRepository", "Updated local database with ${entities.size} tasks")
-                                entities.forEach { entity ->
-                                    Log.d("TaskRepository", "Saved Entity - ID: ${entity.id}, Title: ${entity.title}, ProjectId: ${entity.projectId}")
-                                }
                             }
                         }
                     } else {
-                        Log.d("TaskRepository", "Failed to fetch tasks: ${response.code()} - Using cached data")
+                        Log.d("TaskRepository", "API call failed: ${response.code()} - using cached data")
                     }
                 } catch (e: Exception) {
-                    when (e) {
-                        is kotlinx.coroutines.CancellationException -> {
-                            Log.d("TaskRepository", "Task fetch cancelled - Using cached data")
-                            throw e // Rethrow cancellation to properly cancel the coroutine
-                        }
-                        else -> {
-                            Log.d("TaskRepository", "Error fetching tasks from API - Using cached data", e)
-                        }
-                    }
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    Log.d("TaskRepository", "Error fetching tasks from API, using cached data", e)
                 }
             }
     }
+
 
     suspend fun refreshProjectTasks(projectId: Long) {
         try {
