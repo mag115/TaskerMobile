@@ -2,6 +2,7 @@
 package com.taskermobile.data.api
 
 import android.util.Log
+import com.taskermobile.data.service.TaskService
 import com.taskermobile.data.session.SessionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -32,6 +33,15 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApiService::class.java)
+    }
+
+    val taskApiService: TaskService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TaskService::class.java)
     }
 
 

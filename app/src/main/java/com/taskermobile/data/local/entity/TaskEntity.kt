@@ -39,13 +39,13 @@ data class TaskEntity(
     val progress: Double?,
     val manualProgress: Double?,
     val isDeleted: Boolean = false,
-    
+
     @ColumnInfo(name = "projectId")
     val projectId: Long,
-    
+
     @ColumnInfo(name = "assignedUserId")
     val assignedUserId: Long?,
-    
+
     val status: String,
     val priority: String,
     val timeSpent: Double = 0.0,
@@ -67,9 +67,12 @@ data class TaskEntity(
         progress = progress,
         manualProgress = manualProgress,
         isDeleted = isDeleted,
+        isTracking = false, // No tracking info in TaskEntity, leave it false
+        timerId = null, // No timerId in TaskEntity
         project = project,
         assignedUser = assignedUser,
         projectId = projectId,
+        assignedUserId = assignedUserId,
         status = status,
         priority = priority,
         timeSpent = timeSpent,
@@ -101,4 +104,4 @@ data class TaskEntity(
             scheduledProgress = task.scheduledProgress
         )
     }
-} 
+}

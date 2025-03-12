@@ -183,7 +183,8 @@ class CreateTaskFragment : Fragment() {
                     assignedUser = null,
                     timeSpent = 0.0,
                     elapsedTime = 0.0,
-                    scheduledProgress = null
+                    scheduledProgress = null,
+                    isTracking=false
                 )
 
                 try {

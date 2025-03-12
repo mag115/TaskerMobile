@@ -15,13 +15,14 @@ import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentReportDetailBinding
 import com.taskermobile.ui.adapters.TaskAdapter
 import com.taskermobile.ui.main.controllers.ProjectReportController
+import com.taskermobile.ui.viewmodels.MyTasksViewModel
 import kotlinx.coroutines.launch
 
 class ReportDetailFragment : Fragment() {
 
     private var _binding: FragmentReportDetailBinding? = null
     private val binding get() = _binding!!
-
+    private lateinit var viewModel: MyTasksViewModel
     // Use Safe Args to retrieve the passed reportId.
     private val args: ReportDetailFragmentArgs by navArgs()
 
@@ -51,7 +52,10 @@ class ReportDetailFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        taskAdapter = TaskAdapter()
+        taskAdapter = TaskAdapter({ task ->
+            // Here you can call whatever is necessary for each task click
+            // Timer click logic
+        }, viewModel) // Remove the timer logic from the adapter
         binding.tasksRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = taskAdapter

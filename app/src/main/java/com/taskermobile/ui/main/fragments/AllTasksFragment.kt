@@ -1,6 +1,7 @@
 package com.taskermobile.ui.main.fragments
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +20,9 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.taskermobile.data.model.Task
+import com.taskermobile.ui.viewmodels.AllTasksViewModel
+import com.taskermobile.ui.viewmodels.MyTasksViewModel
 
 class AllTasksFragment : Fragment() {
     private var _binding: FragmentAllTasksBinding? = null
@@ -27,6 +31,8 @@ class AllTasksFragment : Fragment() {
     private lateinit var taskController: TaskController
     private lateinit var sessionManager: SessionManager
     private var loadTasksJob: Job? = null
+    private lateinit var viewModel: MyTasksViewModel
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,11 +58,13 @@ class AllTasksFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        taskAdapter = TaskAdapter()
-        binding.tasksRecyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = taskAdapter
-        }
+        // Pass the ViewModel to the adapter, so the adapter can access the updateTaskTime method
+        taskAdapter = TaskAdapter({ task ->
+            // Here you can call whatever is necessary for each task click
+            // Timer click logic
+        }, viewModel)
+        binding.tasksRecyclerView.layoutManager = LinearLayoutManager(context)
+        binding.tasksRecyclerView.adapter = taskAdapter
     }
 
     private fun setupFab() {
@@ -124,6 +132,10 @@ class AllTasksFragment : Fragment() {
         }
     }
 
+    // Updates the task data (time spent)
+    private fun updateTaskList(task: Task) {
+        task.id?.let { viewModel.updateTaskTime(it, task.timeSpent) }
+    }
 
     override fun onDestroyView() {
         loadTasksJob?.cancel()

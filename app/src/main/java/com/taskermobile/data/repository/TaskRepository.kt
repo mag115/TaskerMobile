@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import retrofit2.HttpException
 import android.util.Log
+import com.taskermobile.data.local.mapper.toEntity
 import kotlinx.coroutines.flow.flow
 
 class TaskRepository(
@@ -49,8 +50,11 @@ class TaskRepository(
     }
     private suspend fun syncTaskWithBackend(task: TaskEntity) {
         try {
-            // Send task to the server using Retrofit API
-            val response = taskService.createTask(task.toTask())  // You would need a TaskService to make API calls to the backend
+            //send task to the server using Retrofit API
+            val projectId: Long = task.projectId
+            val assignedUserId: Long? = task.assignedUserId
+            val taskRequest = task.toTask()
+            val response = taskService.createTask(taskRequest, projectId, assignedUserId)
             if (response.isSuccessful) {
                 Log.d("TaskRepository", "Task synced with server: ${response.body()}")
             } else {
@@ -174,7 +178,10 @@ class TaskRepository(
     // Remote operations with local caching
     suspend fun createTaskWithSync(task: Task): Result<Task> {
         return try {
-            val response = taskService.createTask(task)
+            val projectId: Long = task.projectId
+            val assignedUserId: Long? = task.assignedUserId
+            val taskRequest = task
+            val response = taskService.createTask(taskRequest, projectId, assignedUserId)
             if (response.isSuccessful) {
                 response.body()?.let { taskResponse ->
                     if (taskResponse.success && taskResponse.data != null) {
@@ -213,7 +220,10 @@ class TaskRepository(
         val unsyncedTasks = taskDao.getUnsyncedTasks()
         for (taskEntity in unsyncedTasks) {
             try {
-                val response = taskService.createTask(taskEntity.toTask())
+                val projectId: Long = taskEntity.projectId
+                val assignedUserId: Long? = taskEntity.assignedUserId
+                val taskRequest = taskEntity.toTask()
+                val response = taskService.createTask(taskRequest, projectId, assignedUserId)
                 if (response.isSuccessful) {
                     response.body()?.let { taskResponse ->
                         if (taskResponse.success && taskResponse.data != null) {

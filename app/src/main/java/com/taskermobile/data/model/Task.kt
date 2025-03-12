@@ -17,6 +17,8 @@ data class Task(
     val progress: Double?,
     val manualProgress: Double?,
     val isDeleted: Boolean? = false,
+    var isTracking: Boolean,
+    var timerId: Long? = null,
     
     @SerializedName("project")
     val project: Project?,
@@ -29,8 +31,8 @@ data class Task(
     
     val status: String,
     val priority: String,
-    val timeSpent: Double = 0.0,
-    val elapsedTime: Double = 0.0,
+    var timeSpent: Double = 0.0,
+    var elapsedTime: Double = 0.0,
     val scheduledProgress: Double? = null,
 ) {
     fun calculateActualProgress(): Double {

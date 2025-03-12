@@ -1,6 +1,5 @@
 package com.taskermobile.ui.main.fragments
 
-import android.util.Log
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.local.TaskerDatabase
+import com.taskermobile.data.model.Task
 import com.taskermobile.data.repository.TaskRepository
 import com.taskermobile.data.service.TaskService
 import com.taskermobile.data.session.SessionManager
@@ -18,10 +18,14 @@ import com.taskermobile.ui.adapters.TaskAdapter
 import com.taskermobile.ui.viewmodels.MyTasksViewModel
 import com.taskermobile.ui.viewmodels.MyTasksViewModelFactory
 
+import android.os.Handler
+
+import android.os.Looper
+import android.util.Log
+
 class MyTasksFragment : Fragment() {
     private var _binding: FragmentMyTasksBinding? = null
     private val binding get() = _binding!!
-
     private lateinit var viewModel: MyTasksViewModel
     private lateinit var adapter: TaskAdapter
 
@@ -45,22 +49,28 @@ class MyTasksFragment : Fragment() {
 
         val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao)
 
-        val factory = MyTasksViewModelFactory(taskRepository, sessionManager)
+        val factory = MyTasksViewModelFactory(taskRepository, sessionManager, taskDao)
         viewModel = ViewModelProvider(this, factory)[MyTasksViewModel::class.java]
 
-        adapter = TaskAdapter()
+        // Pass the viewModel to the adapter
+        adapter = TaskAdapter({ task ->
+            // Here you can call whatever is necessary for each task click
+            // Timer click logic
+        }, viewModel)
+
         binding.myTasksRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.myTasksRecyclerView.adapter = adapter
 
         viewModel.myTasks.observe(viewLifecycleOwner) { tasks ->
-            binding.progressBar.visibility = View.GONE // Hide the progress bar
-            if (tasks.isEmpty()) {
-                binding.errorText.visibility = View.VISIBLE
-                binding.myTasksRecyclerView.visibility = View.GONE
-            } else {
-                binding.errorText.visibility = View.GONE
-                binding.myTasksRecyclerView.visibility = View.VISIBLE
-                adapter.submitList(tasks)
+            if (tasks != null) {
+                if (tasks.isEmpty()) {
+                    binding.errorText.visibility = View.VISIBLE
+                    binding.myTasksRecyclerView.visibility = View.GONE
+                } else {
+                    binding.errorText.visibility = View.GONE
+                    binding.myTasksRecyclerView.visibility = View.VISIBLE
+                    adapter.submitList(tasks)
+                }
             }
         }
 
@@ -72,13 +82,13 @@ class MyTasksFragment : Fragment() {
     }
 
     private fun refreshTasks() {
-        binding.progressBar.visibility = View.VISIBLE
-        binding.errorText.visibility = View.GONE
+        Log.d("MyTasksFragment", "Refreshing tasks for the user.")
         viewModel.fetchTasksForUser()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.d("MyTasksFragment", "MyTasksFragment destroyed.")
         _binding = null
     }
 }
