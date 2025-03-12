@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
 import androidx.work.*
@@ -45,10 +46,30 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupDependencies()
-        setupToolbar()  // ✅ Added setupToolbar() function
+        setupToolbar()
         setupNavigation()
         requestNotificationPermission()
         setupProjectSelector()
+
+        binding.navigationView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.navigation_project_report -> {
+                    // Pop the back stack up to the graph's start destination,
+                    // then navigate to the report list destination.
+                    val navOptions = NavOptions.Builder()
+                        // Clear everything so that we start fresh.
+                        .setPopUpTo(navController.graph.startDestinationId, true)
+                        .build()
+                    navController.navigate(R.id.navigation_project_report, null, navOptions)
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                else -> {
+                    // For all other items, use the default behavior.
+                    NavigationUI.onNavDestinationSelected(menuItem, navController)
+                }
+            }
+        }
     }
 
     private fun setupProjectSelector() {
@@ -127,7 +148,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_my_tasks,
                 R.id.navigation_all_tasks,
                 R.id.navigation_notifications,
-                R.id.navigation_projects
+                R.id.navigation_projects,
+                R.id.navigation_project_report
             ), drawerLayout
         )
 

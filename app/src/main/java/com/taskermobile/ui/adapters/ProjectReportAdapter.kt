@@ -9,8 +9,14 @@ import com.taskermobile.data.model.ProjectReport
 import com.taskermobile.databinding.ItemProjectReportBinding
 
 class ProjectReportAdapter(
+    private var currentProjectName: String,
     private val onItemClicked: (ProjectReport) -> Unit
 ) : ListAdapter<ProjectReport, ProjectReportAdapter.ReportViewHolder>(ReportDiffCallback()) {
+
+    fun setProjectName(newName: String) {
+        currentProjectName = newName
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReportViewHolder {
         val binding = ItemProjectReportBinding.inflate(
@@ -18,24 +24,25 @@ class ProjectReportAdapter(
             parent,
             false
         )
-        return ReportViewHolder(binding, onItemClicked)
+        return ReportViewHolder(binding, currentProjectName, onItemClicked)
     }
 
     override fun onBindViewHolder(holder: ReportViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), position)
     }
 
     class ReportViewHolder(
         private val binding: ItemProjectReportBinding,
+        private var currentProjectName: String,
         private val onItemClicked: (ProjectReport) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(report: ProjectReport) {
+        fun bind(report: ProjectReport, position: Int) {
             binding.apply {
-                reportId.text = "Report #${report.id}"
+                // Show project-specific report title using the current project name and sequence number.
+                reportId.text = "Report for $currentProjectName #${position + 1}"
                 reportDate.text = "Date: ${report.reportDate ?: "N/A"}"
                 reportPerformance.text = "Performance: ${report.overallPerformance ?: "N/A"}"
-                // Instead of exporting the PDF, simply call onItemClicked(report)
                 root.setOnClickListener {
                     onItemClicked(report)
                 }
