@@ -9,8 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.taskermobile.data.local.entity.NotificationEntity
 import com.taskermobile.databinding.ItemNotificationBinding
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -34,11 +32,9 @@ class NotificationAdapter(private val onClick: (NotificationEntity) -> Unit) :
             binding.notificationMessage.text = notification.message
 
             // ✅ Format timestamp (convert from Long to readable date)
-            //val dateFormat = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
-            val formatter = DateTimeFormatter.ofPattern("MMM dd, hh:mm a", Locale.getDefault())
-            val formattedDate = LocalDateTime.parse(notification.timestamp).format(formatter)
+            val dateFormat = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
+            val formattedDate = dateFormat.format(Date(notification.timestamp))
             binding.notificationTimestamp.text = formattedDate
-
 
             // ✅ Show/hide red dot for unread messages
             binding.notificationUnreadIndicator.visibility =

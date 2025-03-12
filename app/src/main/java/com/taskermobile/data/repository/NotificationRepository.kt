@@ -17,37 +17,22 @@ class NotificationRepository(
 
     suspend fun fetchNotifications(userId: Long): Result<List<NotificationEntity>> {
         return try {
-            println("🔍 Fetching ALL notifications for user ID: $userId...")
-            val response = notificationApi.getAllNotifications(userId) // Fetch all notifications
-
+            val response = notificationApi.getUnreadNotifications(userId)
             if (response.isSuccessful) {
                 response.body()?.let { notifications ->
-                    println("✅ API returned ${notifications.size} notifications!") // Debug Log
                     notificationDao.insertNotifications(notifications)
-                    return Result.success(notifications)
-                } ?: run {
-                    println("⚠️ API returned empty response!")
-                    return Result.failure(Exception("Empty response"))
-                }
+                    Result.success(notifications)
+                } ?: Result.failure(Exception("Empty response"))
             } else {
-                println("❌ API request failed: ${response.errorBody()?.string()}")
-                return Result.failure(HttpException(response))
+                Result.failure(HttpException(response))
             }
         } catch (e: Exception) {
-            println("❌ Exception while fetching notifications: ${e.message}")
-            return Result.failure(e)
+            Result.failure(e)
         }
     }
-
 
     suspend fun markNotificationAsRead(notificationId: Long) {
-        val response = notificationApi.markNotificationAsRead(notificationId)
-        if (response.isSuccessful) {
-            println("✅ Successfully marked notification $notificationId as read!")
-            notificationDao.markAsRead(notificationId) // Only update if API succeeds
-        } else {
-            println("❌ Failed to mark notification as read: ${response.errorBody()?.string()}")
-        }
+        notificationApi.markNotificationAsRead(notificationId)
+        notificationDao.markAsRead(notificationId)
     }
-
 }

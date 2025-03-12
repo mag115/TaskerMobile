@@ -12,7 +12,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.taskermobile.data.api.NotificationApiService
 import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.model.User
@@ -21,7 +20,6 @@ import com.taskermobile.data.service.UserService
 import com.taskermobile.data.service.TaskService
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.data.local.TaskerDatabase
-import com.taskermobile.data.repository.NotificationRepository
 import com.taskermobile.databinding.FragmentCreateTaskBinding
 import com.taskermobile.ui.viewmodels.CreateTaskViewModel
 import com.taskermobile.ui.viewmodels.CreateTaskViewModelFactory
@@ -55,15 +53,9 @@ class CreateTaskFragment : Fragment() {
         TaskRepository(database.taskDao(), taskService,database.projectDao(), database.userDao())
     }
 
-    private val notificationRepository by lazy {
-        NotificationRepository(
-            notificationApi = RetrofitClient.createService<NotificationApiService>(sessionManager),
-            notificationDao = database.notificationDao()
-        )
-    }
     // Initialize ViewModel using Factory
     private val viewModel: CreateTaskViewModel by viewModels {
-        CreateTaskViewModelFactory(taskRepository, userService, notificationRepository)
+        CreateTaskViewModelFactory(taskRepository, userService)
     }
 
     override fun onCreateView(
@@ -196,7 +188,7 @@ class CreateTaskFragment : Fragment() {
 
                 try {
                     showLoading(true)
-                    viewModel.createTask(task, notificationRepository)
+                    viewModel.createTask(task)
                     Toast.makeText(requireContext(), "Task created successfully", Toast.LENGTH_SHORT).show()
                     parentFragmentManager.popBackStack()
                 } catch (e: Exception) {

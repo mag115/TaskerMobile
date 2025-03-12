@@ -8,5 +8,5 @@ data class NotificationEntity(
     @PrimaryKey val id: Long,
     val message: String,
     val isRead: Boolean = false,
-    val timestamp: String
+    val timestamp: Long
 )
