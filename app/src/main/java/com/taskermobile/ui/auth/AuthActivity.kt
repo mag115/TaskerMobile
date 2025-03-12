@@ -29,7 +29,7 @@ class AuthActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val isTokenValid = sessionManager.authState.first()
-            Log.d("AuthActivity", "Checking auth state: $isTokenValid") // 🔥 Debugging log
+            Log.d("AuthActivity", "Checking auth state: $isTokenValid") // Debugging log
 
             if (isTokenValid) {
                 Log.d("AuthActivity", "Token valid, redirecting to MainActivity")

@@ -51,7 +51,7 @@ class LoginFragment : Fragment() {
             loading = true
             updateLoadingState()
 
-            val username = binding.usernameInput.text.toString() // 🔥 Use username, not email
+            val username = binding.usernameInput.text.toString() // Use username, not email
             val password = binding.passwordInput.text.toString()
 
             authController.login(username, password) { success, message ->

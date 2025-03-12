@@ -48,12 +48,12 @@ class TaskRepository(
     suspend fun insertTask(task: Task) {
         val taskEntity = TaskEntity.fromTask(task)
 
-        Log.d("TaskRepository", "Attempting to insert task: $taskEntity") // 🛠️ Debugging log
+        Log.d("TaskRepository", "Attempting to insert task: $taskEntity") // Debugging log
 
         taskDao.insertTask(taskEntity)
 
         val insertedTask = taskDao.getTaskById(taskEntity.id ?: -1)
-        Log.d("TaskRepository", "Inserted Task from DB: $insertedTask") // 🛠️ Confirm insertion
+        Log.d("TaskRepository", "Inserted Task from DB: $insertedTask") // Confirm insertion
 
         syncTaskWithBackend(taskEntity)
     }

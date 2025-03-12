@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupProjectSelector() {
-        // Get your ProjectSelectorView from the toolbar (it’s defined in your MaterialToolbar)
+        // Get  ProjectSelectorView from the toolbar (it’s defined in your MaterialToolbar)
         val projectSelector = findViewById<ProjectSelectorView>(R.id.projectSelector)
 
         // Instantiate ProjectRepository
@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
 
-        val logoutButton = findViewById<Button>(R.id.logoutButton) // ✅ Now correctly referenced
+        val logoutButton = findViewById<Button>(R.id.logoutButton)
         val backButton = findViewById<ImageButton>(R.id.backButton)
 
         backButton?.setOnClickListener {
@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         logoutButton?.setOnClickListener {
             lifecycleScope.launch {
                 sessionManager.clearSession()
-                authController.logout(this@MainActivity) // ✅ Ensure logout works
+                authController.logout(this@MainActivity)
                 Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
                 finish()
             }

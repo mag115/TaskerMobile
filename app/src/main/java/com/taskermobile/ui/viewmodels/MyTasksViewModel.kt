@@ -17,9 +17,8 @@ import com.taskermobile.data.local.entity.TaskEntity
 class MyTasksViewModel(
     private val taskRepository: TaskRepository,
     private val sessionManager: SessionManager,
-    private val taskDao: TaskDao,
-
-) : ViewModel() {
+    private val taskDao: TaskDao
+) : ViewModel(), TaskUpdater {
 
     private val _myTasks = MutableLiveData<List<Task>?>()
     val myTasks: LiveData<List<Task>?> get() = _myTasks
@@ -36,6 +35,7 @@ class MyTasksViewModel(
         }
     }
 
+<<<<<<< HEAD
     fun sendComment(task: Task, comment: String) {
         viewModelScope.launch {
             taskRepository.addCommentToTask(task.id ?: 0L, comment)
@@ -52,15 +52,18 @@ class MyTasksViewModel(
     }
 
     fun updateTaskInDatabaseAndBackend(task: Task) {
+=======
+    override fun updateTaskInDatabaseAndBackend(task: Task) {
+>>>>>>> e2db3df90dc2ef5f9ae4bd1ed933e8090134723b
         viewModelScope.launch {
             val taskEntity = TaskEntity.fromTask(task)
-            taskDao.updateTask(taskEntity)  // Update task in local database
+            // Update task in local database
+            taskDao.updateTask(taskEntity)
 
             // Optionally, send the updated task time to the backend
             task.id?.let { updateTaskTime(it, task.timeSpent) }
         }
     }
-
 
     fun fetchTasksForUser() {
         viewModelScope.launch {
@@ -84,7 +87,7 @@ class MyTasksViewModel(
 
         viewModelScope.launch {
             try {
-                //api call to update time spent on the task
+                // API call to update time spent on the task
                 Log.d("MyTasksViewModel", "Updating task time for task ID: $taskId with timeSpent: $timeSpent")
                 val response = RetrofitClient.taskApiService.updateTime(timeRequest)
                 if (response.isSuccessful) {

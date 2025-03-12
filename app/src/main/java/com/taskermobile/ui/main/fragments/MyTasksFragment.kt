@@ -55,6 +55,7 @@ class MyTasksFragment : Fragment() {
         viewModel = ViewModelProvider(this, factory)[MyTasksViewModel::class.java]
 
         // Pass the viewModel to the adapter
+<<<<<<< HEAD
         adapter = TaskAdapter(
             { task ->
                 // Handle task timer click here
@@ -64,6 +65,12 @@ class MyTasksFragment : Fragment() {
             },
             viewModel 
         )
+=======
+        adapter = TaskAdapter({ task ->
+            // call whatever is necessary for each task click
+            // Timer click logic
+        }, viewModel)
+>>>>>>> e2db3df90dc2ef5f9ae4bd1ed933e8090134723b
 
         binding.myTasksRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.myTasksRecyclerView.adapter = adapter

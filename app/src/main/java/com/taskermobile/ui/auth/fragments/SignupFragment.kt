@@ -48,7 +48,7 @@ class SignupFragment : Fragment() {
             passwordInput.transformationMethod = PasswordTransformationMethod.getInstance()
             confirmPasswordInput.transformationMethod = PasswordTransformationMethod.getInstance()
 
-            // ✅ Setup Role Selection Spinner
+            // Setup Role Selection Spinner
             ArrayAdapter.createFromResource(
                 requireContext(),
                 R.array.user_roles,  // Defined in strings.xml
@@ -69,7 +69,7 @@ class SignupFragment : Fragment() {
             val email = binding.emailInput.text.toString()
             val password = binding.passwordInput.text.toString()
             val confirmPassword = binding.confirmPasswordInput.text.toString()
-            val role = binding.roleSpinner.selectedItem.toString() // ✅ Capture role
+            val role = binding.roleSpinner.selectedItem.toString() // Capture role
 
             if (!validatePasswords(password, confirmPassword)) {
                 showError("Passwords don't match")

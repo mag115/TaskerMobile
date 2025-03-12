@@ -31,23 +31,23 @@ class NotificationAdapter(private val onClick: (NotificationEntity) -> Unit) :
         fun bind(notification: NotificationEntity) {
             binding.notificationMessage.text = notification.message
 
-            // ✅ Format timestamp (convert from Long to readable date)
+            // Format timestamp (convert from Long to readable date)
             val dateFormat = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
             val formattedDate = dateFormat.format(Date(notification.timestamp))
             binding.notificationTimestamp.text = formattedDate
 
-            // ✅ Show/hide red dot for unread messages
+            // Show/hide red dot for unread messages
             binding.notificationUnreadIndicator.visibility =
                 if (notification.isRead) View.GONE else View.VISIBLE
 
-            // ✅ Click listener: Mark as read
+            // Click listener: Mark as read
             binding.root.setOnClickListener { onClick(notification) }
         }
     }
 }
 
 /**
- * ✅ DiffUtil to optimize RecyclerView updates
+ *  DiffUtil to optimize RecyclerView updates
  */
 class NotificationDiffCallback : DiffUtil.ItemCallback<NotificationEntity>() {
     override fun areItemsTheSame(oldItem: NotificationEntity, newItem: NotificationEntity): Boolean {

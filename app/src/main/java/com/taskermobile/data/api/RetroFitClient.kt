@@ -14,7 +14,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // Replace with your actual backend URL (for emulator use 10.0.2.2)
     internal const val BASE_URL = "http://10.0.2.2:8080"
     internal val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

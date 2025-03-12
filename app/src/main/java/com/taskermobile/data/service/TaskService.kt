@@ -19,7 +19,7 @@ interface TaskService {
     suspend fun createTask(
         @Body task: Task,
         @Query("projectId") projectId: Long,
-        @Query("assignedUserId") assignedUserId: Long? = null // Optional parameter
+        @Query("assignedUserId") assignedUserId: Long? = null
     ): Response<TaskResponse<Task>>
 
 

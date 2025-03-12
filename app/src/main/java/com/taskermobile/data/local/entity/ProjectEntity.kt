@@ -13,7 +13,7 @@ data class ProjectEntity(
     val updatedAt: String?,
     val isSynced: Boolean = false
 ) {
-    /** ✅ Convert ProjectEntity to Project */
+    /** Convert ProjectEntity to Project */
     fun toProject(): Project = Project(
         id = id ?: 0L, // Default to 0 if null
         name = name,
@@ -23,7 +23,7 @@ data class ProjectEntity(
     )
 
     companion object {
-        /** ✅ Convert Project to ProjectEntity */
+        /** Convert Project to ProjectEntity */
         fun fromProject(project: Project): ProjectEntity = ProjectEntity(
             id = project.id,
             name = project.name,
