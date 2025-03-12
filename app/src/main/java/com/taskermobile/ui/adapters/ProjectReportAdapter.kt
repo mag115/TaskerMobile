@@ -35,8 +35,7 @@ class ProjectReportAdapter(
                 reportId.text = "Report #${report.id}"
                 reportDate.text = "Date: ${report.reportDate ?: "N/A"}"
                 reportPerformance.text = "Performance: ${report.overallPerformance ?: "N/A"}"
-
-                // Set a click listener to handle “view details” or “export” etc.
+                // Instead of exporting the PDF, simply call onItemClicked(report)
                 root.setOnClickListener {
                     onItemClicked(report)
                 }

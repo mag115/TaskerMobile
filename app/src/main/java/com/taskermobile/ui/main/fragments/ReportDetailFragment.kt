@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.taskermobile.TaskerApplication
 import com.taskermobile.data.model.ProjectReport
@@ -21,10 +22,12 @@ class ReportDetailFragment : Fragment() {
     private var _binding: FragmentReportDetailBinding? = null
     private val binding get() = _binding!!
 
+    // Use Safe Args to retrieve the passed reportId.
+    private val args: ReportDetailFragmentArgs by navArgs()
+
     private lateinit var reportController: ProjectReportController
     private lateinit var taskAdapter: TaskAdapter
 
-    // Suppose you pass the reportId via arguments, Safe Args, etc.
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -36,16 +39,9 @@ class ReportDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // 1) Setup the controller, adapter, etc.
         setupDependencies()
         setupRecyclerView()
-
-        // 2) Retrieve the report ID from arguments or safe args:
-        val reportId = arguments?.getLong("reportId") ?: 0L
-
-        // 3) Load the report and bind UI
-        loadReportDetails(reportId)
+        loadReportDetails(args.reportId)
     }
 
     private fun setupDependencies() {
@@ -63,18 +59,14 @@ class ReportDetailFragment : Fragment() {
     }
 
     private fun loadReportDetails(reportId: Long) {
+        // Optionally show a progress indicator here
         viewLifecycleOwner.lifecycleScope.launch {
-            // Show a progress bar or something if you like
             try {
                 val report: ProjectReport? = reportController.loadReportDetails(reportId)
                 if (report != null) {
                     bindReportToUI(report)
                 } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "No report found for ID $reportId",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "No report found for ID $reportId", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), e.message, Toast.LENGTH_LONG).show()
@@ -83,14 +75,13 @@ class ReportDetailFragment : Fragment() {
     }
 
     private fun bindReportToUI(report: ProjectReport) {
-        // Bind the report's main fields
+        // Bind the main fields of the report to the UI.
         binding.apply {
             reportIdText.text = "Report #${report.id}"
             reportDateText.text = "Date: ${report.reportDate ?: "N/A"}"
-            // ... any other fields ...
+            // Bind additional fields as necessary.
         }
-
-        // Submit tasks to your existing TaskAdapter
+        // Use your existing TaskAdapter to display the tasks list.
         taskAdapter.submitList(report.tasks)
     }
 

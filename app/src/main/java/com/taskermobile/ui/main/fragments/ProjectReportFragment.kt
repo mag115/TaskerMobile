@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.taskermobile.TaskerApplication
 import com.taskermobile.data.model.ProjectReport
@@ -47,7 +48,7 @@ class ProjectReportFragment : Fragment() {
             reportController.fetchAllReports()
         }
 
-        // Set up FAB click to generate a new report (here using a hardcoded projectId = 1)
+        // Set up FAB click to generate a new report (using hardcoded projectId = 1 for demo)
         binding.fabGenerateReport.setOnClickListener {
             onClickGenerateReport(projectId = 1L)
         }
@@ -62,8 +63,8 @@ class ProjectReportFragment : Fragment() {
 
     private fun setupRecyclerView() {
         reportAdapter = ProjectReportAdapter(onItemClicked = { report ->
-            // For example, clicking a report triggers PDF export:
-            onClickExportReport(report.id ?: return@ProjectReportAdapter)
+            // Instead of exporting the PDF, navigate to the detail screen
+            navigateToReportDetail(report.id ?: return@ProjectReportAdapter)
         })
         binding.reportsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -98,16 +99,11 @@ class ProjectReportFragment : Fragment() {
         }
     }
 
-    private fun onClickExportReport(reportId: Long) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = reportController.exportReport(reportId)
-            if (result.isSuccess) {
-                val pdfBytes = result.getOrNull()
-                Toast.makeText(requireContext(), "PDF Exported! Byte size: ${pdfBytes?.size}", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(requireContext(), "Failed to export PDF: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
-            }
-        }
+    // New function: Navigate to the report detail fragment
+    private fun navigateToReportDetail(reportId: Long) {
+        // Using Navigation Component's safe args:
+        val action = ProjectReportFragmentDirections.actionProjectReportFragmentToReportDetailFragment(reportId)
+        findNavController().navigate(action)
     }
 
     override fun onDestroyView() {

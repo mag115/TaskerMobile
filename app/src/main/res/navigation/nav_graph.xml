@@ -47,8 +47,25 @@
         android:name="com.taskermobile.ui.main.fragments.CreateProjectFragment"
         android:label="Create Project" />
 
+    <!-- Project Report Fragment -->
     <fragment
         android:id="@+id/navigation_project_report"
         android:name="com.taskermobile.ui.main.fragments.ProjectReportFragment"
-        android:label="Project Report" />
+        android:label="Project Report">
+        <!-- Action to navigate to Report Detail Fragment -->
+        <action
+            android:id="@+id/action_projectReportFragment_to_reportDetailFragment"
+            app:destination="@id/reportDetailFragment" />
+    </fragment>
+
+    <!-- Report Detail Fragment -->
+    <fragment
+        android:id="@+id/reportDetailFragment"
+        android:name="com.taskermobile.ui.main.fragments.ReportDetailFragment"
+        android:label="Report Detail">
+        <argument
+            android:name="reportId"
+            app:argType="long" />
+    </fragment>
+
 </navigation>
