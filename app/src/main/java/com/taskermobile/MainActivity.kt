@@ -216,10 +216,11 @@ class MainActivity : AppCompatActivity() {
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "NotificationWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.REPLACE, // Ensures it restarts on app open
             workRequest
         )
     }
+
 
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

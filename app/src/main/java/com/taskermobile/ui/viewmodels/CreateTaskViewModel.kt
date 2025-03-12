@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.model.User
+import com.taskermobile.data.repository.NotificationRepository
 import com.taskermobile.data.repository.TaskRepository
 import com.taskermobile.data.service.UserService
 import kotlinx.coroutines.launch
@@ -13,7 +14,8 @@ import retrofit2.Response
 
 class CreateTaskViewModel(
     private val taskRepository: TaskRepository,
-    private val userService: UserService
+    private val userService: UserService,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _users = MutableLiveData<List<User>>()
@@ -40,15 +42,20 @@ class CreateTaskViewModel(
 
     // Create task and assign a user
     // In your CreateTaskViewModel
-    fun createTask(task: Task) {
+    fun createTask(task: Task, notificationRepository: NotificationRepository) {
         viewModelScope.launch {
             try {
                 taskRepository.insertTask(task)
-                // Or use createTaskWithSync if you're using remote syncing
+
+                // If a user is assigned, fetch their notifications
+                task.assignedUserId?.let { assignedUserId ->
+                    notificationRepository.fetchNotifications(assignedUserId)
+                }
+
             } catch (e: Exception) {
-                // Handle errors
                 throw e
             }
         }
     }
+
 }

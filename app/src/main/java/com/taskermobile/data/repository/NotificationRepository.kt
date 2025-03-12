@@ -17,22 +17,37 @@ class NotificationRepository(
 
     suspend fun fetchNotifications(userId: Long): Result<List<NotificationEntity>> {
         return try {
-            val response = notificationApi.getUnreadNotifications(userId)
+            println("🔍 Fetching ALL notifications for user ID: $userId...")
+            val response = notificationApi.getAllNotifications(userId) // Fetch all notifications
+
             if (response.isSuccessful) {
                 response.body()?.let { notifications ->
+                    println("✅ API returned ${notifications.size} notifications!") // Debug Log
                     notificationDao.insertNotifications(notifications)
-                    Result.success(notifications)
-                } ?: Result.failure(Exception("Empty response"))
+                    return Result.success(notifications)
+                } ?: run {
+                    println("⚠️ API returned empty response!")
+                    return Result.failure(Exception("Empty response"))
+                }
             } else {
-                Result.failure(HttpException(response))
+                println("❌ API request failed: ${response.errorBody()?.string()}")
+                return Result.failure(HttpException(response))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            println("❌ Exception while fetching notifications: ${e.message}")
+            return Result.failure(e)
         }
     }
 
+
     suspend fun markNotificationAsRead(notificationId: Long) {
-        notificationApi.markNotificationAsRead(notificationId)
-        notificationDao.markAsRead(notificationId)
+        val response = notificationApi.markNotificationAsRead(notificationId)
+        if (response.isSuccessful) {
+            println("✅ Successfully marked notification $notificationId as read!")
+            notificationDao.markAsRead(notificationId) // Only update if API succeeds
+        } else {
+            println("❌ Failed to mark notification as read: ${response.errorBody()?.string()}")
+        }
     }
+
 }
