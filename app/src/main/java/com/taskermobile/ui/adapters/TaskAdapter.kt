@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class TaskAdapter(
+    private val onTimerClick: (Task) -> Unit = {},
     private val taskActions: TaskActions,
     private val onTaskClick: (Task) -> Unit,
     private val onCommentSend: (Task, String) -> Unit
@@ -36,8 +37,10 @@ class TaskAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         private var timerRunning = false
+        private var elapsedTime = 0L
+        private var t=0L
         private var handler = Handler(Looper.getMainLooper())
-        private var runnable: Runnable? = null
+        private lateinit var runnable: Runnable
 
         fun bind(task: Task) {
             binding.apply {
@@ -60,11 +63,12 @@ class TaskAdapter(
                     }
                 }
 
+
                 // Set button label based on tracking state
-                updateTimerButton(task)
+               // updateTimerButton(task)
 
                 taskTimerButton.setOnClickListener {
-                    if (task.isTracking) {
+                    if (timerRunning) {
                         stopTimer(task)
                     } else {
                         startTimer(task)
@@ -80,48 +84,63 @@ class TaskAdapter(
         private fun startTimer(task: Task) {
             if (!timerRunning) {
                 timerRunning = true
-                task.isTracking = true
-                task.timerId = System.currentTimeMillis() // Store start time
+                elapsedTime = task.timeSpent.toLong()
+                t = elapsedTime
+                Log.d("TaskViewHolder", "Starting timer. Initial elapsedTime: $elapsedTime")
+
+                //task.isTracking = true
+                //task.timerId = System.currentTimeMillis()
 
                 runnable = object : Runnable {
                     override fun run() {
-                        val elapsedSeconds = ((System.currentTimeMillis() - (task.timerId ?: 0)) / 1000)
-                        binding.taskTimerLabel.text = formatTime(elapsedSeconds)
-                        handler.postDelayed(this, 1000)
+                        if (timerRunning) {
+                            elapsedTime++
+                            binding.taskTimerLabel.text =
+                                formatTime(elapsedTime) // Update the clock UI
+                            Log.d("TaskViewHolder", "Timer running. elapsedTime: $elapsedTime")
+                            handler.postDelayed(this, 1000) // Continue every 1 second
+                        }
                     }
                 }
-                handler.post(runnable!!)
 
-                updateTimerButton(task)
+                handler.post(runnable) // Start the timer
+            }}
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    taskActions.startTracking(task)
-                }
-            }
-        }
+         // updateTimerButton(task)}
+
+          //      CoroutineScope(Dispatchers.IO).launch {
+            //        taskActions.startTracking(task)
+              //  }
+            //}
+        //}
 
         private fun stopTimer(task: Task) {
-            if (timerRunning) {
                 timerRunning = false
-                task.isTracking = false
-                handler.removeCallbacks(runnable!!)
+                //task.isTracking = false
+                handler.removeCallbacks(runnable)
 
-                val startTime = task.timerId ?: return
-                val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000
+               // val startTime = task.timerId ?: return
+              //  val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000
 
-                task.timeSpent += elapsedSeconds
-                task.timerId = null // Reset timer ID
+            task.timeSpent += elapsedTime-t // Add the elapsed time to timeSpent
+            task.elapsedTime = elapsedTime.toDouble()
+               // task.timeSpent += elapsedSeconds - t
+               // task.timerId = null // Reset timer ID
 
                 binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
-                updateTimerButton(task)
+                //updateTimerButton(task)
+            CoroutineScope(Dispatchers.IO).launch {
+                taskActions.stopTracking(task)
+                taskActions.updateTask(task)
+            }
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    taskActions.stopTracking(task)
-                    taskActions.updateTask(task)
-                }
+              //  CoroutineScope(Dispatchers.IO).launch {
+                //    taskActions.stopTracking(task)
+                   // taskActions.updateTask(task)
+
             }
         }
-    }
+
 
     private fun formatTime(seconds: Long): String {
         val minutes = seconds / 60
