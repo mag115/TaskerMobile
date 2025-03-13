@@ -8,8 +8,6 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.taskermobile.data.api.RetrofitClient
@@ -21,8 +19,7 @@ import com.taskermobile.data.service.TaskService
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.data.local.TaskerDatabase
 import com.taskermobile.databinding.FragmentCreateTaskBinding
-import com.taskermobile.ui.viewmodels.CreateTaskViewModel
-import com.taskermobile.ui.viewmodels.CreateTaskViewModelFactory
+import com.taskermobile.ui.main.controllers.CreateTaskController
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -35,28 +32,9 @@ class CreateTaskFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var sessionManager: SessionManager
     private var selectedDeadline: LocalDateTime? = null
-    private var selectedUserId: Long? = null // Store selected user ID
-    private var selectedUserName: String? = null
+    private var selectedUserId: Long? = null
 
-    // Initialize Database
-    private val database by lazy { TaskerDatabase.getDatabase(requireContext()) }
-
-    // Initialize API services
-    private val userService: UserService by lazy {
-        RetrofitClient.createService<UserService>(SessionManager(requireContext()))
-    }
-    private val taskService: TaskService by lazy {
-        RetrofitClient.createService<TaskService>(sessionManager)
-    }
-    // Initialize Repository
-    private val taskRepository: TaskRepository by lazy {
-        TaskRepository(database.taskDao(), taskService,database.projectDao(), database.userDao(), database.notificationDao())
-    }
-
-    // Initialize ViewModel using Factory
-    private val viewModel: CreateTaskViewModel by viewModels {
-        CreateTaskViewModelFactory(taskRepository, userService)
-    }
+    private lateinit var createTaskController: CreateTaskController
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -70,36 +48,47 @@ class CreateTaskFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize SessionManager
         sessionManager = SessionManager(requireContext())
 
+        setupDependencies()
         setupSpinners()
         setupDatePicker()
         setupSubmitButton()
-        setupObservers()
 
-        viewModel.fetchUsers() // Fetch users from backend
+        // Fetch users
+        createTaskController.fetchUsers { users ->
+            populateUserDropdown(users)
+        }
     }
 
-    private fun setupObservers() {
-        // Observe users and populate dropdown
-        viewModel.users.observe(viewLifecycleOwner, Observer { users ->
-            populateUserDropdown(users)
-        })
+    private fun setupDependencies() {
+        val database = TaskerDatabase.getDatabase(requireContext())
+
+        val userService = RetrofitClient.createService<UserService>(sessionManager)
+        val taskService = RetrofitClient.createService<TaskService>(sessionManager)
+
+        val taskRepository = TaskRepository(
+            database.taskDao(),
+            taskService,
+            database.projectDao(),
+            database.userDao(),
+            database.notificationDao()
+        )
+
+        createTaskController = CreateTaskController(taskRepository, userService)
     }
 
     private fun populateUserDropdown(users: List<User>) {
         val adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
-            users.map { it.username } // Display usernames in dropdown
+            users.map { it.username }
         )
         binding.userDropdown.adapter = adapter
 
         binding.userDropdown.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedUserId = users[position].id // Store selected user ID
-                //selectedUserName = users[position].username // This is the user name
+                selectedUserId = users[position].id
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -109,23 +98,17 @@ class CreateTaskFragment : Fragment() {
     }
 
     private fun setupSpinners() {
-        // Priority Spinner
-        val priorities = arrayOf("Low", "Medium", "High")
-        val priorityAdapter = ArrayAdapter(
+        binding.prioritySpinner.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
-            priorities
+            arrayOf("Low", "Medium", "High")
         )
-        binding.prioritySpinner.adapter = priorityAdapter
 
-        // Status Spinner
-        val statuses = arrayOf("To Do", "In Progress", "Done")
-        val statusAdapter = ArrayAdapter(
+        binding.statusSpinner.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
-            statuses
+            arrayOf("To Do", "In Progress", "Done")
         )
-        binding.statusSpinner.adapter = statusAdapter
     }
 
     private fun setupDatePicker() {
@@ -152,16 +135,13 @@ class CreateTaskFragment : Fragment() {
         binding.createTaskButton.setOnClickListener {
             if (!validateInputs()) return@setOnClickListener
 
-            // Launch a coroutine to read the current project ID
             viewLifecycleOwner.lifecycleScope.launch {
-                // Retrieve the current project ID from the session
                 val currentProjectId = sessionManager.currentProjectId.first()
                 if (currentProjectId == null || currentProjectId == 0L) {
                     Toast.makeText(requireContext(), "No project selected", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
-                // Build the task, using the current project ID
                 val task = Task(
                     title = binding.titleInput.text.toString(),
                     description = binding.descriptionInput.text.toString(),
@@ -171,8 +151,8 @@ class CreateTaskFragment : Fragment() {
                     estimatedDuration = binding.durationInput.text.toString().toDoubleOrNull() ?: 0.0,
                     effortPercentage = binding.effortInput.text.toString().toDoubleOrNull() ?: 0.0,
                     dependency = binding.dependencyInput.text.toString().toLongOrNull(),
-                    projectId = currentProjectId, // Use the current project ID from SessionManager
-                    assignedUserId = selectedUserId, // Assign selected user
+                    projectId = currentProjectId,
+                    assignedUserId = selectedUserId,
                     reminderSent = false,
                     estimatedWeeks = null,
                     progressStatus = null,
@@ -184,19 +164,19 @@ class CreateTaskFragment : Fragment() {
                     timeSpent = 0.0,
                     elapsedTime = 0.0,
                     scheduledProgress = null,
-                    isTracking=false
+                    isTracking = false
                 )
 
-                try {
-                    showLoading(true)
-                    viewModel.createTask(task)
-                    Toast.makeText(requireContext(), "Task created successfully", Toast.LENGTH_SHORT).show()
-                    parentFragmentManager.popBackStack()
-                } catch (e: Exception) {
-                    binding.errorText.text = e.message
-                    binding.errorText.visibility = View.VISIBLE
-                } finally {
+                showLoading(true)
+                createTaskController.createTask(task) { success, errorMessage ->
                     showLoading(false)
+                    if (success) {
+                        Toast.makeText(requireContext(), "Task created successfully", Toast.LENGTH_SHORT).show()
+                        parentFragmentManager.popBackStack()
+                    } else {
+                        binding.errorText.text = errorMessage
+                        binding.errorText.visibility = View.VISIBLE
+                    }
                 }
             }
         }

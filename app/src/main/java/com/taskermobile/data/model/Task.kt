@@ -34,6 +34,8 @@ data class Task(
     var timeSpent: Double = 0.0,
     var elapsedTime: Double = 0.0,
     val scheduledProgress: Double? = null,
+
+    var comments: MutableList<String> = mutableListOf()
 ) {
     fun calculateActualProgress(): Double {
         return if (estimatedDuration != null && estimatedDuration > 0) {

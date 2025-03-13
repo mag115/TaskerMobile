@@ -50,4 +50,8 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET isSynced = 1 WHERE id = :taskId")
     suspend fun markTaskAsSynced(taskId: Long?)
+
+    @Query("SELECT COUNT(*) FROM tasks")
+    suspend fun countTasks(): Int
+
 } 

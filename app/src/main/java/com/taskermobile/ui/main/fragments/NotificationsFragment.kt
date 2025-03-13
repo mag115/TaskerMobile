@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.local.TaskerDatabase
@@ -13,28 +12,13 @@ import com.taskermobile.data.repository.NotificationRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentNotificationsBinding
 import com.taskermobile.ui.adapters.NotificationAdapter
-import com.taskermobile.ui.viewmodels.NotificationsViewModel
+import com.taskermobile.ui.main.controllers.NotificationsController
 
 class NotificationsFragment : Fragment() {
     private var _binding: FragmentNotificationsBinding? = null
     private val binding get() = _binding!!
 
-    // Initialize dependencies
-    private val sessionManager by lazy { SessionManager(requireContext()) }
-    private val database by lazy { TaskerDatabase.getDatabase(requireContext()) }
-    private val notificationDao by lazy { database.notificationDao() }
-    private val notificationRepository by lazy {
-        NotificationRepository(
-            notificationApi = RetrofitClient.createService(sessionManager), // Pass sessionManager
-            notificationDao = notificationDao
-        )
-    }
-
-    // Use ViewModel factory
-    private val viewModel: NotificationsViewModel by viewModels {
-        NotificationsViewModel.Factory(notificationRepository)
-    }
-
+    private lateinit var notificationsController: NotificationsController
     private lateinit var adapter: NotificationAdapter
 
     override fun onCreateView(
@@ -47,15 +31,42 @@ class NotificationsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup RecyclerView
+        setupDependencies()
+        setupRecyclerView()
+        fetchNotifications()
+
+        binding.swipeRefresh.setOnRefreshListener { fetchNotifications() }
+        binding.fabRefreshNotifications.setOnClickListener { fetchNotifications() }
+    }
+
+    private fun setupDependencies() {
+        val sessionManager = SessionManager(requireContext())
+        val database = TaskerDatabase.getDatabase(requireContext())
+        val notificationDao = database.notificationDao()
+
+        val notificationRepository = NotificationRepository(
+            notificationApi = RetrofitClient.createService(sessionManager),
+            notificationDao = notificationDao
+        )
+
+        notificationsController = NotificationsController(notificationRepository)
+    }
+
+    private fun setupRecyclerView() {
         adapter = NotificationAdapter { notification ->
-            viewModel.markAsRead(notification) // Click to mark as read
+            notificationsController.markAsRead(notification) {
+                fetchNotifications() // Refresh UI after marking as read
+            }
         }
         binding.notificationsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.notificationsRecyclerView.adapter = adapter
+    }
 
+    private fun fetchNotifications() {
+        binding.progressBar.visibility = View.VISIBLE
+        binding.errorText.visibility = View.GONE
 
-        viewModel.notifications.observe(viewLifecycleOwner) { notifications ->
+        notificationsController.fetchNotifications { notifications, unreadCount ->
             binding.progressBar.visibility = View.GONE
             binding.swipeRefresh.isRefreshing = false
 
@@ -68,26 +79,10 @@ class NotificationsFragment : Fragment() {
                 adapter.submitList(notifications)
             }
         }
-
-        // Pull to Refresh
-        binding.swipeRefresh.setOnRefreshListener {
-            refreshNotifications()
-        }
-
-        // FAB Click to Refresh
-        binding.fabRefreshNotifications.setOnClickListener {
-            refreshNotifications()
-        }
-    }
-
-    private fun refreshNotifications() {
-        binding.progressBar.visibility = View.VISIBLE
-        binding.errorText.visibility = View.GONE
-        viewModel.fetchNotifications()
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         _binding = null
+        super.onDestroyView()
     }
 }

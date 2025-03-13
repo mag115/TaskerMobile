@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.taskermobile.data.local.converter.Converters
 import com.taskermobile.data.local.converter.TaskListConverter
 import com.taskermobile.data.local.dao.NotificationDao
@@ -50,6 +51,12 @@ abstract class TaskerDatabase : RoomDatabase() {
                     "tasker_database"
                 )
                     .fallbackToDestructiveMigration()
+                    .addCallback(object : Callback() { // ✅ Ensure FK constraints are enabled
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            db.execSQL("PRAGMA foreign_keys = ON;")
+                        }
+                    })
                     .build()
                     .also { INSTANCE = it }
             }

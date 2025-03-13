@@ -16,6 +16,7 @@ import com.taskermobile.data.local.mapper.toEntity
 import kotlinx.coroutines.flow.flow
 import com.taskermobile.data.local.dao.NotificationDao
 import com.taskermobile.data.local.entity.NotificationEntity
+import kotlinx.coroutines.flow.firstOrNull
 
 class TaskRepository(
     private val taskDao: TaskDao,
@@ -46,16 +47,13 @@ class TaskRepository(
     }
 
     suspend fun insertTask(task: Task) {
+        Log.d("TaskRepository", "Attempting to insert task: $task")
+
         val taskEntity = TaskEntity.fromTask(task)
-
-        Log.d("TaskRepository", "Attempting to insert task: $taskEntity") // Debugging log
-
         taskDao.insertTask(taskEntity)
 
-        val insertedTask = taskDao.getTaskById(taskEntity.id ?: -1)
-        Log.d("TaskRepository", "Inserted Task from DB: $insertedTask") // Confirm insertion
-
-        syncTaskWithBackend(taskEntity)
+        val count = taskDao.countTasks()
+        Log.d("TaskRepository", "Total tasks in DB after insertion: $count")
     }
 
 
@@ -169,10 +167,11 @@ class TaskRepository(
     fun getAllTasks(): Flow<List<Task>> {
         return taskDao.getAllTasks()
             .map { entities ->
-                Log.d("TaskRepository", "Emitting ${entities.size} tasks from DB") // 🛠️ Debugging log
+                Log.d("TaskRepository", "Retrieving ${entities.size} tasks from DB")
                 entities.map { it.toTask() }
             }
     }
+
 
 
     fun getAllTasksForUser(username: String): Flow<List<Task>> {
@@ -267,4 +266,13 @@ class TaskRepository(
             }
         }
     }
+    suspend fun updateTaskTime(taskId: Long, timeSpent: Double): retrofit2.Response<Task> {
+        val timeRequest = hashMapOf<String, Any>(
+            "taskId" to taskId,
+            "timeSpent" to timeSpent as Any
+        )
+        return taskService.updateTime(timeRequest)
+    }
+
+
 } 

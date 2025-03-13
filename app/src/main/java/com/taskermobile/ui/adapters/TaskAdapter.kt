@@ -1,5 +1,8 @@
 package com.taskermobile.ui.adapters
 
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -7,15 +10,15 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.taskermobile.data.model.Task
 import com.taskermobile.databinding.ItemTaskBinding
-import android.os.Handler
-import android.util.Log
-import com.taskermobile.ui.viewmodels.TaskUpdater
+import com.taskermobile.ui.main.controllers.TaskActions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class TaskAdapter(
-    private val onTimerClick: (Task) -> Unit,
-    private val onCommentSend: (Task, String) -> Unit,
-    private val viewModel: MyTasksViewModel,
-    private val taskUpdater: TaskUpdater
+    private val taskActions: TaskActions,
+    private val onTaskClick: (Task) -> Unit,
+    private val onCommentSend: (Task, String) -> Unit
 ) : ListAdapter<Task, TaskAdapter.TaskViewHolder>(TaskDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
@@ -24,84 +27,99 @@ class TaskAdapter(
     }
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val task = getItem(position)
+        Log.d("TaskAdapter", "Binding task: ${task.title}")
+        holder.bind(task)
     }
 
     inner class TaskViewHolder(private val binding: ItemTaskBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         private var timerRunning = false
-        private var elapsedTime = 0L
-
-        private var handler = Handler()
-        private lateinit var runnable: Runnable
-        private var t = 0L
+        private var handler = Handler(Looper.getMainLooper())
+        private var runnable: Runnable? = null
 
         fun bind(task: Task) {
             binding.apply {
                 taskTitle.text = task.title
-
-                taskDescription.text = task.description ?: "No description" // ✅ Add fallback
-                taskPriority.text = "Priority: ${task.priority ?: "N/A"}"
-                taskStatus.text = "Status: ${task.status ?: "N/A"}"
+                taskDescription.text = task.description
+                taskPriority.text = "Priority: ${task.priority}"
+                taskStatus.text = "Status: ${task.status}"
                 taskDeadline.text = "Deadline: ${task.deadline ?: "No deadline"}"
+
+                // Display stored time spent
                 taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
+                root.setOnClickListener { onTaskClick(task) }
+
+                sendCommentButton.setOnClickListener {
+                    val commentText = commentEditText.text.toString()
+                    if (commentText.isNotBlank()) {
+                        onCommentSend(task, commentText)
+                        commentEditText.text.clear()
+                    }
+                }
+
+                // Set button label based on tracking state
+                updateTimerButton(task)
 
                 taskTimerButton.setOnClickListener {
-                    if (timerRunning) {
+                    if (task.isTracking) {
                         stopTimer(task)
                     } else {
                         startTimer(task)
                     }
                 }
-
-                // **Handle comment submission**
-                sendCommentButton.setOnClickListener {
-                    val commentText = commentEditText.text.toString()
-                    if (commentText.isNotBlank()) {
-                        onCommentSend(task, commentText) // Call ViewModel function
-                        commentEditText.text.clear() // Clear text after sending
-                    }
-                }
             }
+        }
+
+        private fun updateTimerButton(task: Task) {
+            binding.taskTimerButton.text = if (task.isTracking) "Stop Timer" else "Start Timer"
         }
 
         private fun startTimer(task: Task) {
             if (!timerRunning) {
                 timerRunning = true
-                elapsedTime = task.timeSpent.toLong()
-                t = elapsedTime
+                task.isTracking = true
+                task.timerId = System.currentTimeMillis() // Store start time
 
-
-                Log.d("TaskViewHolder", "Starting timer. Initial elapsedTime: $elapsedTime")
                 runnable = object : Runnable {
                     override fun run() {
-                        if (timerRunning) {
-                            elapsedTime++
-                            binding.taskTimerLabel.text = formatTime(elapsedTime)
-
-                            Log.d("TaskViewHolder", "Timer running. elapsedTime: $elapsedTime")
-
-                            handler.postDelayed(this, 1000)
-                        }
+                        val elapsedSeconds = ((System.currentTimeMillis() - (task.timerId ?: 0)) / 1000)
+                        binding.taskTimerLabel.text = formatTime(elapsedSeconds)
+                        handler.postDelayed(this, 1000)
                     }
                 }
-                handler.post(runnable)
+                handler.post(runnable!!)
+
+                updateTimerButton(task)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    taskActions.startTracking(task)
+                }
             }
         }
 
         private fun stopTimer(task: Task) {
-            timerRunning = false
-            handler.removeCallbacks(runnable)
+            if (timerRunning) {
+                timerRunning = false
+                task.isTracking = false
+                handler.removeCallbacks(runnable!!)
 
-            task.timeSpent += elapsedTime - t
-            task.elapsedTime = elapsedTime.toDouble()
-            binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
-            // Use the interface method to update the task
-            taskUpdater.updateTaskInDatabaseAndBackend(task)
+                val startTime = task.timerId ?: return
+                val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000
 
-            elapsedTime = 0
+                task.timeSpent += elapsedSeconds
+                task.timerId = null // Reset timer ID
+
+                binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
+                updateTimerButton(task)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    taskActions.stopTracking(task)
+                    taskActions.updateTask(task)
+                }
+            }
         }
     }
 
@@ -121,5 +139,3 @@ private class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
         return oldItem == newItem
     }
 }
-
-

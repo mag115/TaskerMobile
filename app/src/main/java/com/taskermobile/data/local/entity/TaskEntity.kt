@@ -52,7 +52,7 @@ data class TaskEntity(
     val timeSpent: Double = 0.0,
     val elapsedTime: Double = 0.0,
     val scheduledProgress: Double? = null,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
 ) {
     fun toTask(project: Project? = null, assignedUser: User? = null): Task = Task(
         id = id,

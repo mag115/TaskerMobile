@@ -10,11 +10,11 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="start|top|end|bottom"
         android:orientation="vertical"
         android:padding="16dp"
-       >
+        android:gravity="center_horizontal"> <!-- Center content properly -->
 
+        <!-- Task Title -->
         <TextView
             android:id="@+id/taskTitle"
             android:layout_width="match_parent"
@@ -22,6 +22,7 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
+        <!-- Task Description -->
         <TextView
             android:id="@+id/taskDescription"
             android:layout_width="match_parent"
@@ -30,6 +31,7 @@
             android:ellipsize="end"
             android:maxLines="2" />
 
+        <!-- Priority & Status Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -41,48 +43,56 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
-                />
+                android:text="Priority" />
 
             <TextView
                 android:id="@+id/taskStatus"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
+                android:layout_height="wrap_content"
+                android:text="Status" />
         </LinearLayout>
 
+        <!-- Deadline -->
         <TextView
             android:id="@+id/taskDeadline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <!-- Divider -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="5dp"
-             />
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="10dp" />
 
+        <!-- Timer Label (Updated Width) -->
         <TextView
             android:id="@+id/taskTimerLabel"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:gravity="center"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="10dp"
             android:text="00:00"
             android:textSize="18sp" />
 
+        <!-- Timer Start/Stop Button -->
         <Button
             android:id="@+id/taskTimerButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Start Timer" /> <!-- Center the button horizontally -->
+            android:text="Start Timer"
+            android:layout_marginBottom="10dp" />
 
+        <!-- Divider -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="5dp"
-             />
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="10dp" />
 
+        <!-- Comment Input -->
         <EditText
             android:id="@+id/commentEditText"
             android:layout_width="match_parent"
@@ -91,6 +101,7 @@
             android:hint="Write a comment..."
             android:padding="5dp" />
 
+        <!-- Send Comment Button -->
         <Button
             android:id="@+id/sendCommentButton"
             android:layout_width="wrap_content"
