@@ -50,13 +50,13 @@ class AllTasksFragment : Fragment() {
 
     private fun setupRecyclerView() {
         taskAdapter = TaskAdapter(
-            taskActions = allTasksController, // ✅ Now correctly implements TaskActions
+            taskActions = allTasksController,
             onTaskClick = { task ->
                 // Handle task click, e.g., navigate to details
             },
             onCommentSend = { task, comment ->
                 lifecycleScope.launch {
-                    allTasksController.sendComment(task, comment) // ✅ No more unresolved reference
+                    allTasksController.sendComment(task, comment)
                 }
             }
         )
@@ -92,9 +92,9 @@ class AllTasksFragment : Fragment() {
         binding.emptyStateText.visibility = View.GONE
 
         allTasksController.getAllTasks { tasks ->
-            if (!isAdded || activity == null) return@getAllTasks // ✅ Prevent crash if fragment is detached
+            if (!isAdded || activity == null) return@getAllTasks // Prevent crash if fragment is detached
 
-            requireActivity().runOnUiThread {  // ✅ Ensures UI updates on the Main Thread
+            requireActivity().runOnUiThread {  // Ensures UI updates on the Main Thread
                 binding.progressBar.visibility = View.GONE
                 binding.swipeRefresh.isRefreshing = false
 

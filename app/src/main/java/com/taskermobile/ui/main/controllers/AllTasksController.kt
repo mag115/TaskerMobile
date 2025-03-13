@@ -36,7 +36,7 @@ class AllTasksController(private val taskController: TaskController) : TaskActio
         }
     }
 
-    override fun stopTracking(task: Task) { // ✅ ADDED THIS
+    override fun stopTracking(task: Task) { // ADDED THIS
         CoroutineScope(Dispatchers.IO).launch {
             val startTime = task.timerId ?: return@launch
             val timeElapsed = (System.currentTimeMillis() - startTime) / 1000

@@ -83,8 +83,8 @@ class MyTasksFragment : Fragment() {
         binding.progressBar.visibility = View.VISIBLE
         binding.errorText.visibility = View.GONE
 
-        myTasksController.getMyTasks { tasks: List<Task>? ->  // ✅ FIXED FUNCTION NAME & EXPLICIT TYPE
-            if (!isAdded || _binding == null) return@getMyTasks  // ✅ Prevent crashes when fragment is destroyed
+        myTasksController.getMyTasks { tasks: List<Task>? ->
+            if (!isAdded || _binding == null) return@getMyTasks  // Prevent crashes when fragment is destroyed
 
             binding.progressBar.visibility = View.GONE
             binding.swipeRefresh.isRefreshing = false

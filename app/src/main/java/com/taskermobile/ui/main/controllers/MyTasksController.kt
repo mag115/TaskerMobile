@@ -60,13 +60,13 @@ class MyTasksController(
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 taskRepository.getAllTasks().collect { taskList ->
-                    withContext(Dispatchers.Main) {  // ✅ Ensure UI updates on main thread
+                    withContext(Dispatchers.Main) {  // Ensure UI updates on main thread
                         onResult(taskList)
                     }
                 }
             } catch (e: Exception) {
                 Log.e("MyTasksController", "Error fetching tasks", e)
-                withContext(Dispatchers.Main) {  // ✅ Handle errors on main thread
+                withContext(Dispatchers.Main) {  // Handle errors on main thread
                     onResult(null)
                 }
             }
