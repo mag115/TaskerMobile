@@ -1,13 +1,15 @@
 package com.taskermobile.ui.main.controllers
 
 import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.local.dao.ProjectReportDao
+import com.taskermobile.data.local.dao.TaskDao
+import com.taskermobile.data.local.mapper.toEntity
 import com.taskermobile.data.model.ProjectReport
 import com.taskermobile.data.model.ReportOptions
+import com.taskermobile.data.model.Task
 import com.taskermobile.data.repository.ProjectReportRepository
 import com.taskermobile.data.service.ProjectReportService
 import com.taskermobile.data.session.SessionManager
-import com.taskermobile.data.local.dao.ProjectReportDao
-import com.taskermobile.data.local.dao.TaskDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,8 +21,9 @@ import kotlinx.coroutines.launch
 class ProjectReportController(
     private val sessionManager: SessionManager,
     private val reportDao: ProjectReportDao,
-    private val taskDao: TaskDao  // NEW dependency
-) {
+    private val taskDao: TaskDao
+) : TaskActions { // Implement TaskActions
+
     private val reportService: ProjectReportService =
         RetrofitClient.createService(sessionManager)
     private val reportRepository = ProjectReportRepository(reportService, reportDao, taskDao)
@@ -63,7 +66,6 @@ class ProjectReportController(
     }
 
     suspend fun loadReportDetails(reportId: Long): ProjectReport? {
-        // Retrieve the current project ID from session; assume report is for current project.
         val currentProjectId = sessionManager.currentProjectId.first() ?: 0L
         val result = reportRepository.fetchReportById(reportId, currentProjectId)
         return result.getOrNull()
@@ -72,6 +74,28 @@ class ProjectReportController(
     suspend fun exportReport(reportId: Long): Result<ByteArray> {
         return reportRepository.exportReportAsPdf(reportId)
     }
+
+    /**  Implementing TaskActions **/
+
+    override fun sendComment(task: Task, comment: String) {
+        task.comments.add(comment)
+        updateTask(task)
+    }
+
+    override fun updateTask(task: Task) {
+        val taskEntity = task.toEntity()
+        controllerScope.launch(Dispatchers.IO) {
+            taskDao.updateTask(taskEntity)
+        }
+    }
+
+    override fun startTracking(task: Task) {
+        // Implement logic to start task tracking (e.g., update status, start timer)
+    }
+
+    override fun stopTracking(task: Task) {
+        // Implement logic to stop task tracking (e.g., save elapsed time)
+    }
 }
 
 sealed class ReportState {
@@ -79,3 +103,4 @@ sealed class ReportState {
     data class Success(val reports: List<ProjectReport>) : ReportState()
     data class Error(val error: Throwable) : ReportState()
 }
+
