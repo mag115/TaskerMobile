@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">TaskerMobile</string>
     <string name="generate_report">Generate Report</string>
+    <string name="download_report">Download Report</string>
 
     <string-array name="user_roles">
         <item>PROJECT_MANAGER</item>

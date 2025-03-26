@@ -36,4 +36,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"/>
 
+    <!-- Removed: FAB for downloading a report -->
+    <!--
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabDownloadReport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/download_report"
+        app:srcCompat="@drawable/ic_download"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/fabGenerateReport"
+        android:layout_margin="16dp"/>
+    -->
+
 </androidx.constraintlayout.widget.ConstraintLayout>

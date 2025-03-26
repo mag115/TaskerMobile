@@ -43,12 +43,12 @@ class ProjectReportFragment : Fragment() {
         setupRecyclerView()
         observeReports()
 
-        // Load the reports when the fragment is shown
+        // Load reports when fragment appears.
         lifecycleScope.launch {
             reportController.fetchAllReports()
         }
 
-        // Set up FAB click to generate a new report (for demonstration, using hardcoded projectId = 1)
+        // FAB to generate a new report.
         binding.fabGenerateReport.setOnClickListener {
             onClickGenerateReport(projectId = 1L)
         }
@@ -69,7 +69,6 @@ class ProjectReportFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        // Provide an initial default name; it will be updated once the current project is loaded.
         reportAdapter = ProjectReportAdapter("Current Project", onItemClicked = { report ->
             navigateToReportDetail(report.id ?: return@ProjectReportAdapter)
         })
