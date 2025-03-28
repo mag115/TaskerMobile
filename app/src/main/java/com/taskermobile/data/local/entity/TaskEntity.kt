@@ -53,6 +53,8 @@ data class TaskEntity(
     val elapsedTime: Double = 0.0,
     val scheduledProgress: Double? = null,
     val isSynced: Boolean = false,
+    @ColumnInfo(name = "imageUri")
+    var imageUri: String? = null
 ) {
     fun toTask(project: Project? = null, assignedUser: User? = null): Task = Task(
         id = id,

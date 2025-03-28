@@ -1,9 +1,12 @@
 package com.taskermobile.ui.adapters
 
+import android.net.Uri
+import com.taskermobile.R
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -19,7 +22,10 @@ class TaskAdapter(
     private val onTimerClick: (Task) -> Unit = {},
     private val taskActions: TaskActions,
     private val onTaskClick: (Task) -> Unit,
-    private val onCommentSend: (Task, String) -> Unit
+    private val onCommentSend: (Task, String) -> Unit,
+    private val onAttachPhoto: (Task) -> Unit //bætti við núna
+
+
 ) : ListAdapter<Task, TaskAdapter.TaskViewHolder>(TaskDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
@@ -61,6 +67,16 @@ class TaskAdapter(
                         onCommentSend(task, commentText)
                         commentEditText.text.clear()
                     }
+                }
+
+                attachPhotoButton.setOnClickListener {
+                    onAttachPhoto(task)
+                }
+                if (!task.imageUri.isNullOrEmpty()) {
+                    binding.imageView.visibility = View.VISIBLE
+                    binding.imageView.setImageURI(Uri.parse(task.imageUri))
+                } else {
+                    binding.imageView.visibility = View.GONE
                 }
 
 

@@ -15,6 +15,7 @@ import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.FragmentMyTasksBinding
 import com.taskermobile.ui.adapters.TaskAdapter
 import com.taskermobile.ui.main.controllers.MyTasksController
+import androidx.activity.result.contract.ActivityResultContracts
 
 import android.util.Log
 
@@ -25,6 +26,26 @@ class MyTasksFragment : Fragment() {
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var sessionManager: SessionManager
     private lateinit var myTasksController: MyTasksController
+    private lateinit var selectedTask: Task
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            Log.d("MyTasksFragment", "Picked image URI: $it")
+            val updatedTask = selectedTask.copy(imageUri = it.toString())
+
+            val currentList = taskAdapter.currentList.toMutableList()
+            val index = currentList.indexOfFirst { it.id == selectedTask.id }
+
+            if (index != -1) {
+                currentList[index] = updatedTask
+                taskAdapter.submitList(currentList)
+            }
+
+            // Optionally save it to DB
+            myTasksController.updateTask(updatedTask)//updatea task í db með controller eftir!!
+
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -32,6 +53,7 @@ class MyTasksFragment : Fragment() {
         _binding = FragmentMyTasksBinding.inflate(inflater, container, false)
         return binding.root
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -65,7 +87,12 @@ class MyTasksFragment : Fragment() {
             },
             onCommentSend = { task, comment ->
                 myTasksController.sendComment(task, comment)
-            }
+            },
+            onAttachPhoto = { task ->
+                selectedTask = task
+                pickImageLauncher.launch("image/*")
+            },
+
         )
 
         binding.myTasksRecyclerView.layoutManager = LinearLayoutManager(requireContext())
