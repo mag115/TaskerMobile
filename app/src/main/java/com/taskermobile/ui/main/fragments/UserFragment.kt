@@ -34,7 +34,7 @@ class UserFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         sessionManager = SessionManager(requireContext())
-        userController = UserController(sessionManager)
+        userController = UserController(sessionManager, requireActivity().application)
         setupRecyclerView()
         observeUsers()
 

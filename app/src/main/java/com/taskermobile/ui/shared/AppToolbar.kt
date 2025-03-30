@@ -46,7 +46,14 @@ class AppToolbar @JvmOverloads constructor(
 
         binding.logoutButton.setOnClickListener {
             lifecycleScope.launchWhenStarted {
+
                 sessionManager.clearSession()
+                
+
+                val isBiometricEnabled = sessionManager.isBiometricLoginEnabled()
+                val (encToken, encIv) = sessionManager.getEncryptedTokenAndIv()
+                android.util.Log.d("AppToolbar", "Logout - Biometric state: enabled=$isBiometricEnabled, hasToken=${encToken != null}, hasIv=${encIv != null}")
+                
                 NavigationManager.navigateToAuth(context)
             }
         }

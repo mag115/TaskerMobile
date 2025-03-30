@@ -80,6 +80,16 @@
         android:visibility="gone"
         android:layout_marginTop="8dp"/>
 
+    <!-- Add biometric checkbox -->
+    <CheckBox
+        android:id="@+id/enableBiometricCheckbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable fingerprint login"
+        android:visibility="gone"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"/>
+
     <TextView
         android:id="@+id/loginLink"
         android:layout_width="wrap_content"

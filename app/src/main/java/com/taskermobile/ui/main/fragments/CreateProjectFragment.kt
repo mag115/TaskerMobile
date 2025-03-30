@@ -38,8 +38,9 @@ class CreateProjectFragment : Fragment() {
 
     private fun setupDependencies() {
         sessionManager = SessionManager(requireContext())
-        val projectDao = (requireActivity().application as TaskerApplication).database.projectDao()
-        projectController = ProjectController(sessionManager, projectDao)
+        val application = requireActivity().application
+        val projectDao = (application as TaskerApplication).database.projectDao()
+        projectController = ProjectController(sessionManager, projectDao, application)
     }
 
     private fun setupCreateButton() {

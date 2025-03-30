@@ -4,6 +4,7 @@ import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.local.dao.ProjectReportDao
 import com.taskermobile.data.local.dao.TaskDao
 import com.taskermobile.data.local.mapper.toEntity
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.model.ProjectReport
 import com.taskermobile.data.model.ReportOptions
 import com.taskermobile.data.model.Task
@@ -17,15 +18,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.app.Application
 
 class ProjectReportController(
     private val sessionManager: SessionManager,
     private val reportDao: ProjectReportDao,
-    private val taskDao: TaskDao
-) : TaskActions { // Implement TaskActions
-
+    private val taskDao: TaskDao,
+    private val application: Application
+) {
     private val reportService: ProjectReportService =
-        RetrofitClient.createService(sessionManager)
+        RetroFitClient.createService(application, sessionManager)
     private val reportRepository = ProjectReportRepository(reportService, reportDao, taskDao)
 
     private val _uiState = MutableStateFlow<ReportState>(ReportState.Loading)

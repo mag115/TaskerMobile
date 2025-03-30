@@ -1,19 +1,21 @@
 package com.taskermobile.ui.main.controllers
 
 import android.util.Log
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.model.User
 import com.taskermobile.data.service.UserService
 import com.taskermobile.data.session.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
+import android.app.Application
+import com.taskermobile.TaskerApplication
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 
-class UserController(private val sessionManager: SessionManager) {
-    private val userService = RetrofitClient.createService<UserService>(sessionManager)
+class UserController(private val sessionManager: SessionManager, private val application: Application) {
+    private val userService = RetroFitClient.createService<UserService>(application, sessionManager)
 
     private val _users = MutableStateFlow<List<User>>(emptyList())
     val users: StateFlow<List<User>> = _users.asStateFlow()

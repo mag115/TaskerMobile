@@ -1,9 +1,11 @@
-
 package com.taskermobile.data.api
 
 import android.util.Log
+import android.app.Application
+import com.taskermobile.TaskerApplication
 import com.taskermobile.data.service.TaskService
 import com.taskermobile.data.session.SessionManager
+import com.taskermobile.network.AuthInterceptor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
@@ -13,7 +15,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object RetrofitClient {
+object RetroFitClient {
     internal const val BASE_URL = "http://10.0.2.2:8080"
     internal val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -44,20 +46,11 @@ object RetrofitClient {
     }
 
 
-    internal inline fun <reified T> createService(sessionManager: SessionManager): T {
+    // Explicitly defining the correct signature again
+    internal inline fun <reified T> createService(app: Application, sessionManager: SessionManager): T {
         val authClient = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .addInterceptor { chain ->
-                val token = runBlocking {
-                    sessionManager.authToken.firstOrNull() // Avoid potential `null`
-                } ?: "" // Fallback to empty string
-
-                val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer $token")
-                    .build()
-                chain.proceed(request)
-            }
-
+            .addInterceptor(AuthInterceptor(app, sessionManager))
             .build()
 
         return Retrofit.Builder()

@@ -50,8 +50,7 @@ class AllTasksFragment : Fragment() {
     private fun setupDependencies() {
         sessionManager = SessionManager(requireContext())
 
-        // Initialize TaskController first
-        val taskController = TaskController(requireContext(), sessionManager)
+        val taskController = TaskController(requireContext(), sessionManager, requireActivity().application)
 
         // Pass TaskController into AllTasksController
         allTasksController = AllTasksController(taskController)
