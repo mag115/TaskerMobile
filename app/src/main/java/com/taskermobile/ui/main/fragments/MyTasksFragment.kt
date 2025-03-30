@@ -103,6 +103,7 @@ class MyTasksFragment : Fragment() {
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
             loadTasks()
+
         }
     }
 
@@ -115,8 +116,11 @@ class MyTasksFragment : Fragment() {
 
             binding.progressBar.visibility = View.GONE
             binding.swipeRefresh.isRefreshing = false
-
+            tasks?.forEach {
+                Log.d("MyTasksFragment", "Task: ${it.title}, Image: ${it.imageUri}")
+            }
             Log.d("MyTasksFragment", "Received ${tasks?.size} tasks for display")
+            Log.d("MyTasksFragment", "Received tasks: ${tasks}")
 
             if (tasks.isNullOrEmpty()) {
                 binding.errorText.visibility = View.VISIBLE
