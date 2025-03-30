@@ -2,7 +2,8 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/navigation_home">
+    app:startDestination="@id/navigation_home"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <fragment
         android:id="@+id/navigation_home"
@@ -57,6 +58,12 @@
             android:id="@+id/action_projectReportFragment_to_reportDetailFragment"
             app:destination="@id/reportDetailFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/navigation_my_profile"
+        android:name="com.taskermobile.ui.main.fragments.MyProfileFragment"
+        android:label="My Profile"
+        tools:layout="@layout/fragment_my_profile" />
 
     <!-- Report Detail Fragment -->
     <fragment

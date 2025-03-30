@@ -24,6 +24,7 @@ class SessionManager(private val context: Context) {
         private val ROLE_KEY = stringPreferencesKey("role")
         private val PROJECTS_KEY = stringPreferencesKey("projects")
         private val EXPIRES_AT = longPreferencesKey("expires_at")
+        private val PROFILE_PIC_URI_KEY = stringPreferencesKey("profile_pic_uri")
     }
 
     val token = context.dataStore.data.map { it[TOKEN_KEY] }
@@ -49,6 +50,16 @@ class SessionManager(private val context: Context) {
             preferences[ROLE_KEY] = role
             preferences[EXPIRES_AT] = expiresAt
         }
+    }
+
+    suspend fun saveProfilePictureUri(uri: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PROFILE_PIC_URI_KEY] = uri
+        }
+    }
+
+    val profilePictureUri: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[PROFILE_PIC_URI_KEY]
     }
 
     // Save and retrieve current project by its ID

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.taskermobile.databinding.FragmentAllTasksBinding
@@ -15,15 +16,23 @@ import com.taskermobile.data.session.SessionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
+import com.taskermobile.data.model.Task
 
 class AllTasksFragment : Fragment() {
 
     private var _binding: FragmentAllTasksBinding? = null
     private val binding get() = _binding!!
-
+    private lateinit var selectedTask: Task
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var sessionManager: SessionManager
     private lateinit var allTasksController: AllTasksController
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            Log.d("MyTasksFragment", "Picked image URI: $it")
+            selectedTask.imageUri = it.toString() // Make sure your Task model supports this
+            //updatea task í db með controller eftir!!
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAllTasksBinding.inflate(inflater, container, false)
@@ -58,6 +67,10 @@ class AllTasksFragment : Fragment() {
                 lifecycleScope.launch {
                     allTasksController.sendComment(task, comment)
                 }
+            },
+            onAttachPhoto = { task ->
+                selectedTask = task
+                pickImageLauncher.launch("image/*")
             }
         )
 
