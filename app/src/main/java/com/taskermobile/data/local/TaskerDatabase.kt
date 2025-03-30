@@ -27,7 +27,7 @@ import com.taskermobile.data.local.entity.UserEntity
         NotificationEntity::class,
         ProjectReportEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(TaskListConverter::class, Converters::class)

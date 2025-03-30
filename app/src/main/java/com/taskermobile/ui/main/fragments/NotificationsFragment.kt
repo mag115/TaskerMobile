@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.local.TaskerDatabase
 import com.taskermobile.data.repository.NotificationRepository
 import com.taskermobile.data.session.SessionManager
@@ -15,6 +15,9 @@ import com.taskermobile.databinding.FragmentNotificationsBinding
 import com.taskermobile.ui.adapters.NotificationAdapter
 import com.taskermobile.ui.main.controllers.NotificationsController
 import kotlinx.coroutines.launch
+import android.app.Application
+import com.taskermobile.TaskerApplication
+import com.taskermobile.data.api.NotificationApiService
 
 class NotificationsFragment : Fragment() {
     private var _binding: FragmentNotificationsBinding? = null
@@ -22,7 +25,8 @@ class NotificationsFragment : Fragment() {
 
     private lateinit var notificationsController: NotificationsController
     private lateinit var adapter: NotificationAdapter
-
+    private lateinit var sessionManager: SessionManager
+    private lateinit var application: Application
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -42,14 +46,13 @@ class NotificationsFragment : Fragment() {
     }
 
     private fun setupDependencies() {
-        val sessionManager = SessionManager(requireContext())
-        val database = TaskerDatabase.getDatabase(requireContext())
+        sessionManager = SessionManager(requireContext())
+        val application = requireActivity().application // Get application
+        val database = (application as TaskerApplication).database
         val notificationDao = database.notificationDao()
-
-        val notificationRepository = NotificationRepository(
-            notificationApi = RetrofitClient.createService(sessionManager),
-            notificationDao = notificationDao
-        )
+        // Pass application and sessionManager
+        val notificationApiService = RetroFitClient.createService<NotificationApiService>(application, sessionManager)
+        val notificationRepository = NotificationRepository(notificationApiService, notificationDao)
 
         notificationsController = NotificationsController(notificationRepository)
     }
@@ -89,8 +92,6 @@ class NotificationsFragment : Fragment() {
             }
         }
     }
-
-
 
     override fun onDestroyView() {
         _binding = null

@@ -62,10 +62,12 @@ class ProjectReportFragment : Fragment() {
     }
 
     private fun setupDependencies() {
-        val database = (requireActivity().application as TaskerApplication).database
+        val application = requireActivity().application // Get application
+        val database = (application as TaskerApplication).database
         val reportDao = database.projectReportDao()
         val taskDao = database.taskDao()
-        reportController = ProjectReportController(sessionManager, reportDao, taskDao)
+        // Pass application context to ProjectReportController
+        reportController = ProjectReportController(sessionManager, reportDao, taskDao, application)
     }
 
     private fun setupRecyclerView() {

@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.model.User
 import com.taskermobile.data.repository.TaskRepository
@@ -63,9 +63,10 @@ class CreateTaskFragment : Fragment() {
 
     private fun setupDependencies() {
         val database = TaskerDatabase.getDatabase(requireContext())
+        val application = requireActivity().application
 
-        val userService = RetrofitClient.createService<UserService>(sessionManager)
-        val taskService = RetrofitClient.createService<TaskService>(sessionManager)
+        val userService = RetroFitClient.createService<UserService>(application, sessionManager)
+        val taskService = RetroFitClient.createService<TaskService>(application, sessionManager)
 
         val taskRepository = TaskRepository(
             database.taskDao(),

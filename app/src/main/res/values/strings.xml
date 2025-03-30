@@ -9,4 +9,12 @@
 
     <string name="navigation_drawer_open">Open Navigation</string>
     <string name="navigation_drawer_close">Close Navigation</string>
+
+    <string name="continue_text">Continue</string>
+    <string name="biometric_auth_title">Biometric Login Setup</string>
+    <string name="biometric_auth_subtitle_encrypt">Confirm fingerprint to encrypt login for future use</string>
+    <string name="enable_biometric_title">Enable Biometric Login?</string> 
+    <string name="cancel">Cancel</string> 
+    <string name="biometric_login_title">Login</string>
+    <string name="biometric_login_subtitle">Authenticate to log in</string>
 </resources>
