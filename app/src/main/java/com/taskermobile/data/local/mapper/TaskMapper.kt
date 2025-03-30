@@ -24,8 +24,10 @@ fun Task.toEntity() = TaskEntity(
     priority = priority,
     timeSpent = timeSpent,
     elapsedTime = elapsedTime,
-    scheduledProgress = scheduledProgress
+    scheduledProgress = scheduledProgress,
+    imageUri = imageUri
 )
+
 
 // Convert TaskEntity (database entity) to Task (domain model)
 fun TaskEntity.toDomain() = Task(
@@ -42,15 +44,16 @@ fun TaskEntity.toDomain() = Task(
     progress = progress,
     manualProgress = manualProgress,
     isDeleted = isDeleted,
-    isTracking = false,  // Default value, as `TaskEntity` does not store tracking info
-    timerId = null,  // Default value, `TaskEntity` does not store timerId
-    project = null,  // Can be fetched separately if needed
-    assignedUser = null,  // Can be fetched separately if needed
+    isTracking = false,
+    timerId = null,
+    project = null,
+    assignedUser = null,
     projectId = projectId,
     assignedUserId = assignedUserId,
     status = status,
     priority = priority,
     timeSpent = timeSpent,
     elapsedTime = elapsedTime,
-    scheduledProgress = scheduledProgress
+    scheduledProgress = scheduledProgress,
+    imageUri=imageUri
 )

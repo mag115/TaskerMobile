@@ -61,7 +61,7 @@
                     android:text="Logout"
                     android:padding="8dp"
                     android:textColor="@android:color/white"
-                    app:layout_constraintEnd_toEndOf="parent"/>  <!-- ✅ Fixed Constraint -->
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
@@ -87,7 +87,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Navigation Drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
         android:layout_width="wrap_content"

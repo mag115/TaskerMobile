@@ -56,17 +56,18 @@ class MyTasksController(
         }
     }
 
-    fun getMyTasks(onResult: (List<Task>?) -> Unit) {
+    fun getMyTasks(onResult: (List<Task>?) -> Unit, refresh: Boolean = true){
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                if (refresh) taskRepository.refreshTasks()
                 taskRepository.getAllTasks().collect { taskList ->
-                    withContext(Dispatchers.Main) {  // Ensure UI updates on main thread
+                    withContext(Dispatchers.Main) {
                         onResult(taskList)
                     }
                 }
             } catch (e: Exception) {
                 Log.e("MyTasksController", "Error fetching tasks", e)
-                withContext(Dispatchers.Main) {  // Handle errors on main thread
+                withContext(Dispatchers.Main) {
                     onResult(null)
                 }
             }

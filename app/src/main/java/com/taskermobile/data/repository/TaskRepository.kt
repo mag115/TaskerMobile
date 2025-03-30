@@ -26,20 +26,51 @@ class TaskRepository(
     private val notificationDao: NotificationDao
 ) {
 
-    private suspend fun refreshTasks() {
+    suspend fun refreshTasks() {
         try {
-            // Fetch from remote
-            val response = taskService.getAllTasks(0) // 0 means all tasks
+            val response = taskService.getAllTasks(0)
             if (response.isSuccessful) {
-                response.body()?.let { tasks ->
-                    // Convert to entities and mark as synced
-                    val entities = tasks.map { TaskEntity.fromTask(it).copy(isSynced = true) }
-                    taskDao.insertTasks(entities)
+                val apiTasks = response.body() ?: emptyList()
+                val localTasks = taskDao.getAllTasks().firstOrNull() ?: emptyList()
+                val localMap = localTasks.associateBy { it.id }
+
+                val mergedEntities = apiTasks.map { apiTask ->
+                    val local = localMap[apiTask.id]
+                    TaskEntity.fromTask(apiTask).copy(
+                        imageUri = local?.imageUri,
+                        isSynced = true
+                    )
                 }
+                taskDao.insertTasks(mergedEntities)
             }
         } catch (e: Exception) {
-            // Ignore network errors - we'll just use local data
+            Log.e("TaskRepository", "refreshTasks merge failed", e)
         }
+    }
+
+    suspend fun syncAndGetAllTasksWithLocalMerge(): Flow<List<Task>> {
+        try {
+            val apiResponse = taskService.getAllTasks(0)
+            if (apiResponse.isSuccessful) {
+                val apiTasks = apiResponse.body() ?: emptyList()
+
+                val localTasks = taskDao.getAllTasks().firstOrNull() ?: emptyList()
+                val localTasksMap = localTasks.associateBy { it.id }
+
+                val mergedTasks = apiTasks.map { apiTask ->
+                    val local = localTasksMap[apiTask.id]
+                    val imageUri = local?.imageUri
+                    TaskEntity.fromTask(apiTask).copy(imageUri = imageUri, isSynced = true)
+                }
+                Log.d("MergedTasks", "Saving: ${mergedTasks.map { it.id to it.imageUri }}")
+
+                taskDao.insertTasks(mergedTasks)
+            }
+        } catch (e: Exception) {
+            Log.e("TaskRepository", "syncAndGetAllTasksWithLocalMerge failed", e)
+        }
+
+        return taskDao.getAllTasks().map { it.map { entity -> entity.toTask() } }
     }
 
     suspend fun getTaskById(taskId: Long): Task? {
@@ -81,6 +112,7 @@ class TaskRepository(
         if (task != null) {
             task.comments.add(comment)
             taskDao.updateTask(task)
+
         }
     }
 
@@ -92,6 +124,7 @@ class TaskRepository(
     suspend fun updateTask(task: Task) {
         val taskEntity = TaskEntity.fromTask(task)
         taskDao.updateTask(taskEntity)
+        Log.d("TaskRepo", "Saving task ${task.id} with imageUri = ${task.imageUri}")
     }
 
     suspend fun deleteTask(task: Task) {
@@ -119,8 +152,15 @@ class TaskRepository(
                             }
                             Log.d("TaskRepository", "API returned ${filteredTasks.size} tasks for project $projectId")
                             // Convert to entities and update local cache
-                            val entities = filteredTasks.map { task ->
-                                TaskEntity.fromTask(task.copy(projectId = projectId)).copy(isSynced = true)
+                            val localTasks = taskDao.getTasksByProject(projectId).firstOrNull() ?: emptyList()
+                            val localMap = localTasks.associateBy { it.id }
+
+                            val entities = tasks.map { task ->
+                                val local = localMap[task.id]
+                                TaskEntity.fromTask(task.copy(projectId = projectId)).copy(
+                                    imageUri = local?.imageUri,
+                                    isSynced = true
+                                )
                             }
                             if (entities.isNotEmpty()) {
                                 taskDao.insertTasks(entities)

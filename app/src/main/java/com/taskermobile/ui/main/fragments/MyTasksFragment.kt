@@ -41,8 +41,7 @@ class MyTasksFragment : Fragment() {
                 taskAdapter.submitList(currentList)
             }
 
-            // Optionally save it to DB
-            myTasksController.updateTask(updatedTask)//updatea task í db með controller eftir!!
+            myTasksController.updateTask(updatedTask)
 
         }
     }
@@ -83,7 +82,6 @@ class MyTasksFragment : Fragment() {
         taskAdapter = TaskAdapter(
             taskActions = myTasksController,
             onTaskClick = { task ->
-                // Handle task click (e.g., open task details)
             },
             onCommentSend = { task, comment ->
                 myTasksController.sendComment(task, comment)
@@ -111,8 +109,8 @@ class MyTasksFragment : Fragment() {
         binding.progressBar.visibility = View.VISIBLE
         binding.errorText.visibility = View.GONE
 
-        myTasksController.getMyTasks { tasks: List<Task>? ->
-            if (!isAdded || _binding == null) return@getMyTasks  // Prevent crashes when fragment is destroyed
+        myTasksController.getMyTasks({ tasks ->
+            if (!isAdded || _binding == null) return@getMyTasks
 
             binding.progressBar.visibility = View.GONE
             binding.swipeRefresh.isRefreshing = false
@@ -131,7 +129,7 @@ class MyTasksFragment : Fragment() {
                 binding.myTasksRecyclerView.visibility = View.VISIBLE
                 taskAdapter.submitList(tasks)
             }
-        }
+        }, refresh = false)
     }
 
 

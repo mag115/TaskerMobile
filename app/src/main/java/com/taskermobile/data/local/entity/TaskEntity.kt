@@ -104,7 +104,8 @@ data class TaskEntity(
             priority = task.priority,
             timeSpent = task.timeSpent,
             elapsedTime = task.elapsedTime,
-            scheduledProgress = task.scheduledProgress
+            scheduledProgress = task.scheduledProgress,
+            imageUri=task.imageUri
         )
     }
 }

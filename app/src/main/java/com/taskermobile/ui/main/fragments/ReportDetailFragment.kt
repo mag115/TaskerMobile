@@ -63,7 +63,10 @@ class ReportDetailFragment : Fragment() {
             taskActions = reportController, // if your TaskAdapter supports actions
             onTaskClick = { /* Handle task click if needed */ },
             onCommentSend = { task, comment ->
-                // For now, simply ignore or log the comment.
+
+            },
+            onAttachPhoto = { task ->
+
             }
         )
         binding.tasksRecyclerView.apply {

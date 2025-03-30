@@ -1,5 +1,6 @@
 package com.taskermobile.ui.main.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
+import com.taskermobile.R
 
 class MyProfileFragment : Fragment() {
 
@@ -23,9 +25,12 @@ class MyProfileFragment : Fragment() {
     private val pickImageLauncher: ActivityResultLauncher<String> =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
+                requireContext().contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
                 binding.imageViewAvatar.setImageURI(it)
 
-                // Persist the selected image URI
                 lifecycleScope.launch {
                     sessionManager.saveProfilePictureUri(it.toString())
                 }
@@ -47,7 +52,6 @@ class MyProfileFragment : Fragment() {
 
         sessionManager = SessionManager(requireContext())
 
-        // Collect user info from DataStore
         lifecycleScope.launch {
             sessionManager.username.collectLatest { username ->
                 binding.textViewUsername.text = username ?: "Unknown User"
@@ -66,11 +70,16 @@ class MyProfileFragment : Fragment() {
             sessionManager.profilePictureUri.collectLatest { uriString ->
                 uriString?.let {
                     val uri = Uri.parse(it)
-                    binding.imageViewAvatar.setImageURI(uri)
+                    try {
+                        binding.imageViewAvatar.setImageURI(uri)
+                    } catch (e: SecurityException) {
+                        e.printStackTrace()
+                        binding.imageViewAvatar.setImageResource(R.drawable.ic_person)
+                    }
                 }
             }
-        }
 
+        }
     }
 
     override fun onDestroyView() {

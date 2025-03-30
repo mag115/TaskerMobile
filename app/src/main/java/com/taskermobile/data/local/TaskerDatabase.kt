@@ -17,7 +17,7 @@ import androidx.room.migration.Migration
         NotificationEntity::class,
         ProjectReportEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(TaskListConverter::class, Converters::class)
@@ -35,7 +35,26 @@ abstract class TaskerDatabase : RoomDatabase() {
 
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE tasks ADD COLUMN imageUri TEXT")
+                // Already handled in next migration safely
+            }
+        }
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                val cursor = database.query("PRAGMA table_info(tasks)")
+                var hasImageUri = false
+                while (cursor.moveToNext()) {
+                    val columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+                    if (columnName == "imageUri") {
+                        hasImageUri = true
+                        break
+                    }
+                }
+                cursor.close()
+
+                if (!hasImageUri) {
+                    database.execSQL("ALTER TABLE tasks ADD COLUMN imageUri TEXT")
+                }
             }
         }
 
@@ -46,7 +65,7 @@ abstract class TaskerDatabase : RoomDatabase() {
                     TaskerDatabase::class.java,
                     "tasker_database"
                 )
-                    .addMigrations(MIGRATION_6_7)
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
                     .addCallback(object : Callback() {
                         override fun onOpen(db: SupportSQLiteDatabase) {
                             super.onOpen(db)
