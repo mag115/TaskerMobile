@@ -1,6 +1,5 @@
 package com.taskermobile.ui.main.controllers
 
-import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.local.dao.ProjectReportDao
 import com.taskermobile.data.local.dao.TaskDao
 import com.taskermobile.data.local.mapper.toEntity
@@ -25,7 +24,7 @@ class ProjectReportController(
     private val reportDao: ProjectReportDao,
     private val taskDao: TaskDao,
     private val application: Application
-) {
+) : TaskActions {
     private val reportService: ProjectReportService =
         RetroFitClient.createService(application, sessionManager)
     private val reportRepository = ProjectReportRepository(reportService, reportDao, taskDao)
@@ -92,11 +91,23 @@ class ProjectReportController(
     }
 
     override fun startTracking(task: Task) {
-        // Implement logic to start task tracking (e.g., update status, start timer)
+        controllerScope.launch(Dispatchers.IO) {
+            task.isTracking = true
+            task.timerId = System.currentTimeMillis()
+            updateTask(task)
+        }
     }
 
     override fun stopTracking(task: Task) {
-        // Implement logic to stop task tracking (e.g., save elapsed time)
+        controllerScope.launch(Dispatchers.IO) {
+            val startTime = task.timerId ?: return@launch
+            val timeElapsed = (System.currentTimeMillis() - startTime) / 1000
+
+            task.timeSpent += timeElapsed
+            task.isTracking = false
+            task.timerId = null
+            updateTask(task)
+        }
     }
 }
 

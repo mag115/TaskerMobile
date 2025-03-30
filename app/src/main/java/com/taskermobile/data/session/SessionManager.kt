@@ -81,6 +81,7 @@ class SessionManager(private val context: Context) {
 
     val profilePictureUri: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[PROFILE_PIC_URI_KEY]
+    }
     // Save encrypted token and IV (as Base64 strings)
     suspend fun saveEncryptedToken(encryptedToken: ByteArray, iv: ByteArray) {
         val encodedToken = Base64.encodeToString(encryptedToken, Base64.NO_WRAP)

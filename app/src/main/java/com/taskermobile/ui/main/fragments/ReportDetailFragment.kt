@@ -54,19 +54,19 @@ class ReportDetailFragment : Fragment() {
         val db = (requireActivity().application as TaskerApplication).database
         val reportDao = db.projectReportDao()
         val taskDao = db.taskDao()
-        reportController = ProjectReportController(sessionManager, reportDao, taskDao)
+        reportController = ProjectReportController(sessionManager, reportDao, taskDao, requireActivity().application as TaskerApplication)
     }
 
     private fun setupRecyclerView() {
-        // Now pass an additional lambda for onCommentSend (even if it's a no-op)
+        // Create an adapter that works with the controller
         taskAdapter = TaskAdapter(
-            taskActions = reportController, // if your TaskAdapter supports actions
+            taskActions = reportController,
             onTaskClick = { /* Handle task click if needed */ },
             onCommentSend = { task, comment ->
-
+                reportController.sendComment(task, comment)
             },
             onAttachPhoto = { task ->
-
+                // Handle photo attachment if needed
             }
         )
         binding.tasksRecyclerView.apply {
