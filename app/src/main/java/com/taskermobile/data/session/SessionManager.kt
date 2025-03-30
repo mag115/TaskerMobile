@@ -26,11 +26,8 @@ class SessionManager(private val context: Context) {
         private val ROLE_KEY = stringPreferencesKey("role")
         private val PROJECTS_KEY = stringPreferencesKey("projects")
         private val EXPIRES_AT = longPreferencesKey("expires_at")
-<<<<<<< HEAD
         private val PROFILE_PIC_URI_KEY = stringPreferencesKey("profile_pic_uri")
-=======
         private val BIOMETRIC_ENABLED_KEY = booleanPreferencesKey("biometric_enabled") // New key for biometric preference
->>>>>>> notifications
     }
 
     val token = context.dataStore.data.map { it[TOKEN_KEY] }
@@ -76,7 +73,6 @@ class SessionManager(private val context: Context) {
         }
     }
 
-<<<<<<< HEAD
     suspend fun saveProfilePictureUri(uri: String) {
         context.dataStore.edit { preferences ->
             preferences[PROFILE_PIC_URI_KEY] = uri
@@ -85,7 +81,6 @@ class SessionManager(private val context: Context) {
 
     val profilePictureUri: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[PROFILE_PIC_URI_KEY]
-=======
     // Save encrypted token and IV (as Base64 strings)
     suspend fun saveEncryptedToken(encryptedToken: ByteArray, iv: ByteArray) {
         val encodedToken = Base64.encodeToString(encryptedToken, Base64.NO_WRAP)
@@ -126,7 +121,6 @@ class SessionManager(private val context: Context) {
             preferences.remove(ENCRYPTED_AUTH_TOKEN_KEY)
             preferences.remove(AUTH_TOKEN_IV_KEY)
         }
->>>>>>> notifications
     }
 
     // Save and retrieve current project by its ID
