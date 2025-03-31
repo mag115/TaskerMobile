@@ -13,7 +13,6 @@ import android.widget.ArrayAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.taskermobile.R
 import com.taskermobile.data.model.Task
 import com.taskermobile.databinding.ItemTaskBinding
 import com.taskermobile.ui.main.controllers.TaskActions
@@ -74,7 +73,7 @@ class TaskAdapter(
                         commentEditText.text.clear()
                     }
                 }
-                
+
                 attachPhotoButton.setOnClickListener {
                     onAttachPhoto(task)
                 }
