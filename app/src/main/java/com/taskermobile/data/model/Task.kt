@@ -29,7 +29,7 @@ data class Task(
     val projectId: Long,
     val assignedUserId: Long? = assignedUser?.id,
     
-    val status: String,
+    var status: String,
     val priority: String,
     var timeSpent: Double = 0.0,
     var elapsedTime: Double = 0.0,

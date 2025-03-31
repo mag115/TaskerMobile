@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp"
-        android:gravity="center_horizontal"> <!-- Center content properly -->
+        android:gravity="center_horizontal">
 
         <!-- Task Title -->
         <TextView
@@ -66,7 +66,7 @@
             android:background="@android:color/darker_gray"
             android:layout_marginTop="10dp" />
 
-        <!-- Timer Label (Updated Width) -->
+        <!-- Timer Label -->
         <TextView
             android:id="@+id/taskTimerLabel"
             android:layout_width="match_parent"
@@ -77,7 +77,7 @@
             android:text="00:00"
             android:textSize="18sp" />
 
-        <!-- Timer Start/Stop Button -->
+        <!-- Timer Button -->
         <Button
             android:id="@+id/taskTimerButton"
             android:layout_width="wrap_content"
@@ -120,6 +120,13 @@
             android:scaleType="centerCrop"
             android:visibility="visible" />
 
+        <!-- Status Spinner (for editing) -->
+        <Spinner
+            android:id="@+id/statusSpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_gravity="end" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -8,6 +8,12 @@
         <item>TEAM_MEMBER</item>
     </string-array>
 
+    <string-array name="task_status_array">
+        <item>To Do</item>
+        <item>Ongoing</item>
+        <item>Complete</item>
+    </string-array>
+
     <string name="navigation_drawer_open">Open Navigation</string>
     <string name="navigation_drawer_close">Close Navigation</string>
 
