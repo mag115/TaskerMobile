@@ -115,10 +115,12 @@
             android:text="Add a photo" />
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:scaleType="centerCrop"
-            android:visibility="visible" />
+            android:visibility="gone"
+            android:layout_marginTop="10dp"
+            />
 
         <!-- Status Spinner (for editing) -->
         <Spinner

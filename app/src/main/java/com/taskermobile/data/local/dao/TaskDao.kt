@@ -54,6 +54,8 @@ interface TaskDao {
     @Query("SELECT COUNT(*) FROM tasks")
     suspend fun countTasks(): Int
 
+    @Query("UPDATE tasks SET imageUri = :imageUri WHERE id = :taskId")
+    suspend fun updateImageUri(taskId: Long?, imageUri: String)
 
 
 } 

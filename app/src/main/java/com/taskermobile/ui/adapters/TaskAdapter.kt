@@ -58,8 +58,6 @@ class TaskAdapter(
                 taskPriority.text = "Priority: ${task.priority}"
                 taskStatus.text = "Status: ${task.status}"
                 taskDeadline.text = "Deadline: ${task.deadline ?: "No deadline"}"
-
-                // Display stored time spent
                 taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
                 updateTimerButton(task)
@@ -77,16 +75,18 @@ class TaskAdapter(
                 attachPhotoButton.setOnClickListener {
                     onAttachPhoto(task)
                 }
+
+                //show image if exists and allow click to preview
                 if (!task.imageUri.isNullOrEmpty()) {
-                    binding.imageView.visibility = View.VISIBLE
-                    binding.imageView.setImageURI(Uri.parse(task.imageUri))
+                    imageView.visibility = View.VISIBLE
+                    imageView.setImageURI(Uri.parse(task.imageUri))
+
+                    imageView.setOnClickListener {
+                        showFullImageDialog(task.imageUri!!)
+                    }
                 } else {
-                    binding.imageView.visibility = View.GONE
+                    imageView.visibility = View.GONE
                 }
-
-
-                // Set button label based on tracking state
-               // updateTimerButton(task)
 
                 taskTimerButton.setOnClickListener {
                     if (timerRunning) {
@@ -95,8 +95,7 @@ class TaskAdapter(
                         startTimer(task)
                     }
                 }
-
-                // Spinner setup for status change
+                
                 val statusOptions = root.context.resources.getStringArray(R.array.task_status_array)
                 val adapter = ArrayAdapter(root.context, android.R.layout.simple_spinner_item, statusOptions)
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -165,7 +164,26 @@ class TaskAdapter(
                 taskActions.stopTracking(task)
                 taskActions.updateTask(task)
             }
+
+
+              //  CoroutineScope(Dispatchers.IO).launch {
+                //    taskActions.stopTracking(task)
+                   // taskActions.updateTask(task)
+
+            }
+
+    private fun showFullImageDialog(imageUri: String) {
+        val context = binding.root.context
+        val dialog = android.app.Dialog(context)
+        dialog.setContentView(R.layout.dialog_full_image)
+        val fullImageView = dialog.findViewById<android.widget.ImageView>(R.id.fullImageView)
+        fullImageView.setImageURI(Uri.parse(imageUri))
+        fullImageView.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
         }
+
 
         private fun formatTime(seconds: Long): String {
             val minutes = seconds / 60
@@ -183,4 +201,4 @@ private class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
     override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
         return oldItem == newItem
     }
-}
+}}
