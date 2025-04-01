@@ -17,7 +17,7 @@ import androidx.room.migration.Migration
         NotificationEntity::class,
         ProjectReportEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(TaskListConverter::class, Converters::class)

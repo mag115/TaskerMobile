@@ -191,7 +191,7 @@ class TaskAdapter(
             return String.format("%02d:%02d", minutes, remainingSeconds)
         }
     }
-}
+
 
 private class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
     override fun areItemsTheSame(oldItem: Task, newItem: Task): Boolean {
@@ -201,4 +201,4 @@ private class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
     override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
         return oldItem == newItem
     }
-}}
+}
