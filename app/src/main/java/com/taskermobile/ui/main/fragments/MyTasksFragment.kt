@@ -16,8 +16,13 @@ import com.taskermobile.databinding.FragmentMyTasksBinding
 import com.taskermobile.ui.adapters.TaskAdapter
 import com.taskermobile.ui.main.controllers.MyTasksController
 import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.flow.first
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MyTasksFragment : Fragment() {
     private var _binding: FragmentMyTasksBinding? = null
@@ -42,6 +47,9 @@ class MyTasksFragment : Fragment() {
             }
 
             myTasksController.updateTask(updatedTask)
+            CoroutineScope(Dispatchers.IO).launch {
+                myTasksController.taskDao.updateImageUri(updatedTask.id, updatedTask.imageUri ?: "")
+            }
 
         }
     }
@@ -114,11 +122,6 @@ class MyTasksFragment : Fragment() {
 
             binding.progressBar.visibility = View.GONE
             binding.swipeRefresh.isRefreshing = false
-            tasks?.forEach {
-                Log.d("MyTasksFragment", "Task: ${it.title}, Image: ${it.imageUri}")
-            }
-            Log.d("MyTasksFragment", "Received ${tasks?.size} tasks for display")
-            Log.d("MyTasksFragment", "Received tasks: ${tasks}")
 
             if (tasks.isNullOrEmpty()) {
                 binding.errorText.visibility = View.VISIBLE
@@ -127,12 +130,26 @@ class MyTasksFragment : Fragment() {
             } else {
                 binding.errorText.visibility = View.GONE
                 binding.myTasksRecyclerView.visibility = View.VISIBLE
-                taskAdapter.submitList(tasks)
+
+                //merge backend tasks w room images
+                CoroutineScope(Dispatchers.IO).launch {
+                    val localTasksFlow = myTasksController.taskDao.getAllTasks()
+                    val localTasks = localTasksFlow.first()
+
+                    val mergedTasks = tasks.map { taskFromServer ->
+                        val local = localTasks.find { it.id == taskFromServer.id }
+                        if (!local?.imageUri.isNullOrEmpty()) {
+                            taskFromServer.copy(imageUri = local?.imageUri)
+                        } else taskFromServer
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        taskAdapter.submitList(mergedTasks)
+                    }
+                }
             }
         }, refresh = false)
     }
-
-
 
 
     override fun onDestroyView() {

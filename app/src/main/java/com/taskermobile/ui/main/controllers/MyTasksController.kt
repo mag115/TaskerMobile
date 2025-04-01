@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 class MyTasksController(
     private val taskRepository: TaskRepository,
     private val sessionManager: SessionManager,
-    private val taskDao: TaskDao
+    val taskDao: TaskDao
 ) : TaskActions {
 
     override fun sendComment(task: Task, comment: String) {
