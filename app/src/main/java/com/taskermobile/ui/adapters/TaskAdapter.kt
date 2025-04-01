@@ -8,6 +8,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -47,6 +49,7 @@ class TaskAdapter(
         private var t = 0L
         private var handler = Handler(Looper.getMainLooper())
         private lateinit var runnable: Runnable
+        private var isSpinnerListenerActive = false
 
         fun bind(task: Task) {
             binding.apply {
@@ -56,6 +59,8 @@ class TaskAdapter(
                 taskStatus.text = "Status: ${task.status}"
                 taskDeadline.text = "Deadline: ${task.deadline ?: "No deadline"}"
                 taskTimerLabel.text = formatTime(task.timeSpent.toLong())
+
+                updateTimerButton(task)
 
                 root.setOnClickListener { onTaskClick(task) }
 
@@ -71,7 +76,7 @@ class TaskAdapter(
                     onAttachPhoto(task)
                 }
 
-                // Show image if exists and allow click to preview
+                //show image if exists and allow click to preview
                 if (!task.imageUri.isNullOrEmpty()) {
                     imageView.visibility = View.VISIBLE
                     imageView.setImageURI(Uri.parse(task.imageUri))
@@ -90,6 +95,35 @@ class TaskAdapter(
                         startTimer(task)
                     }
                 }
+                
+                val statusOptions = root.context.resources.getStringArray(R.array.task_status_array)
+                val adapter = ArrayAdapter(root.context, android.R.layout.simple_spinner_item, statusOptions)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                statusSpinner.adapter = adapter
+
+                val statusIndex = statusOptions.indexOfFirst { it.equals(task.status, ignoreCase = true) }
+                if (statusIndex >= 0) {
+                    isSpinnerListenerActive = false
+                    statusSpinner.setSelection(statusIndex, false)
+                }
+
+                statusSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                        if (!isSpinnerListenerActive) {
+                            isSpinnerListenerActive = true
+                            return
+                        }
+                        val selectedStatus = parent.getItemAtPosition(position).toString()
+                        if (task.status != selectedStatus) {
+                            task.status = selectedStatus
+                            CoroutineScope(Dispatchers.IO).launch {
+                                taskActions.updateTask(task)
+                            }
+                        }
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>) {}
+                }
             }
         }
 
@@ -104,51 +138,33 @@ class TaskAdapter(
                 t = elapsedTime
                 Log.d("TaskViewHolder", "Starting timer. Initial elapsedTime: $elapsedTime")
 
-                //task.isTracking = true
-                //task.timerId = System.currentTimeMillis()
-
                 runnable = object : Runnable {
                     override fun run() {
                         if (timerRunning) {
                             elapsedTime++
-                            binding.taskTimerLabel.text =
-                                formatTime(elapsedTime) // Update the clock UI
+                            binding.taskTimerLabel.text = formatTime(elapsedTime)
                             Log.d("TaskViewHolder", "Timer running. elapsedTime: $elapsedTime")
-                            handler.postDelayed(this, 1000) // Continue every 1 second
+                            handler.postDelayed(this, 1000)
                         }
                     }
                 }
 
-                handler.post(runnable) // Start the timer
-            }}
-
-         // updateTimerButton(task)}
-
-          //      CoroutineScope(Dispatchers.IO).launch {
-            //        taskActions.startTracking(task)
-              //  }
-            //}
-        //}
+                handler.post(runnable)
+            }
+        }
 
         private fun stopTimer(task: Task) {
-                timerRunning = false
-                //task.isTracking = false
-                handler.removeCallbacks(runnable)
-
-               // val startTime = task.timerId ?: return
-              //  val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000
-
-            task.timeSpent += elapsedTime-t // Add the elapsed time to timeSpent
+            timerRunning = false
+            handler.removeCallbacks(runnable)
+            task.timeSpent += (elapsedTime - t)
             task.elapsedTime = elapsedTime.toDouble()
-               // task.timeSpent += elapsedSeconds - t
-               // task.timerId = null // Reset timer ID
+            binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
-                binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
-                //updateTimerButton(task)
             CoroutineScope(Dispatchers.IO).launch {
                 taskActions.stopTracking(task)
                 taskActions.updateTask(task)
             }
+
 
               //  CoroutineScope(Dispatchers.IO).launch {
                 //    taskActions.stopTracking(task)
@@ -166,11 +182,14 @@ class TaskAdapter(
         dialog.show()
     }
 
+        }
 
-    private fun formatTime(seconds: Long): String {
-        val minutes = seconds / 60
-        val remainingSeconds = seconds % 60
-        return String.format("%02d:%02d", minutes, remainingSeconds)
+
+        private fun formatTime(seconds: Long): String {
+            val minutes = seconds / 60
+            val remainingSeconds = seconds % 60
+            return String.format("%02d:%02d", minutes, remainingSeconds)
+        }
     }
 }
 

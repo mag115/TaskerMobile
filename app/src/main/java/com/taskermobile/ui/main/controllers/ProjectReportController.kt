@@ -1,9 +1,9 @@
 package com.taskermobile.ui.main.controllers
 
-import com.taskermobile.data.api.RetrofitClient
 import com.taskermobile.data.local.dao.ProjectReportDao
 import com.taskermobile.data.local.dao.TaskDao
 import com.taskermobile.data.local.mapper.toEntity
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.model.ProjectReport
 import com.taskermobile.data.model.ReportOptions
 import com.taskermobile.data.model.Task
@@ -17,15 +17,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.app.Application
 
 class ProjectReportController(
     private val sessionManager: SessionManager,
     private val reportDao: ProjectReportDao,
-    private val taskDao: TaskDao
-) : TaskActions { // Implement TaskActions
-
+    private val taskDao: TaskDao,
+    private val application: Application
+) : TaskActions {
     private val reportService: ProjectReportService =
-        RetrofitClient.createService(sessionManager)
+        RetroFitClient.createService(application, sessionManager)
     private val reportRepository = ProjectReportRepository(reportService, reportDao, taskDao)
 
     private val _uiState = MutableStateFlow<ReportState>(ReportState.Loading)
@@ -90,11 +91,23 @@ class ProjectReportController(
     }
 
     override fun startTracking(task: Task) {
-        // Implement logic to start task tracking (e.g., update status, start timer)
+        controllerScope.launch(Dispatchers.IO) {
+            task.isTracking = true
+            task.timerId = System.currentTimeMillis()
+            updateTask(task)
+        }
     }
 
     override fun stopTracking(task: Task) {
-        // Implement logic to stop task tracking (e.g., save elapsed time)
+        controllerScope.launch(Dispatchers.IO) {
+            val startTime = task.timerId ?: return@launch
+            val timeElapsed = (System.currentTimeMillis() - startTime) / 1000
+
+            task.timeSpent += timeElapsed
+            task.isTracking = false
+            task.timerId = null
+            updateTask(task)
+        }
     }
 }
 

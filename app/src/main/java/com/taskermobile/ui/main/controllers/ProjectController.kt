@@ -1,6 +1,6 @@
 package com.taskermobile.ui.main.controllers
 
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.model.Project
 import com.taskermobile.data.repository.ProjectRepository
 import com.taskermobile.data.service.ProjectService
@@ -12,12 +12,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.app.Application
 
 class ProjectController(
     sessionManager: SessionManager,
-    private val projectDao: ProjectDao
+    private val projectDao: ProjectDao,
+    private val application: Application
 ) {
-    private val projectService = RetrofitClient.createService<ProjectService>(sessionManager)
+    private val projectService = RetroFitClient.createService<ProjectService>(application, sessionManager)
     private val projectRepository = ProjectRepository(projectService, projectDao)
     private val _projects = MutableStateFlow<ProjectsState>(ProjectsState.Loading)
     val projects: StateFlow<ProjectsState> = _projects

@@ -2,7 +2,7 @@ package com.taskermobile.ui.main.controllers
 
 import android.content.Context
 import android.util.Log
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.local.TaskerDatabase
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.repository.TaskRepository
@@ -10,9 +10,10 @@ import com.taskermobile.data.service.TaskService
 import com.taskermobile.data.session.SessionManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import android.app.Application
 
-class TaskController(context: Context, sessionManager: SessionManager) {
-    private val taskService = RetrofitClient.createService<TaskService>(sessionManager)
+class TaskController(context: Context, sessionManager: SessionManager, application: Application) {
+    private val taskService = RetroFitClient.createService<TaskService>(application, sessionManager)
     private val database = TaskerDatabase.getDatabase(context)
     private val taskDao = database.taskDao()
     private val projectDao = database.projectDao()

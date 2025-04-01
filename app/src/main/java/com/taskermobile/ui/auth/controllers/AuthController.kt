@@ -3,10 +3,15 @@ package com.taskermobile.ui.auth.controllers
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.app.Application
+import com.taskermobile.TaskerApplication
+import com.taskermobile.data.model.LoginResponse
 import com.taskermobile.data.model.SignupRequest
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.ui.auth.AuthActivity
+import com.taskermobile.ui.auth.fragments.LoginFragment
+import com.taskermobile.util.CryptographyManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,27 +26,26 @@ class AuthController(
     /**
      * Handle user login
      */
-    fun login(username: String, password: String, onResult: (Boolean, String?) -> Unit) {
+    fun login(username: String, password: String, onResult: (response: LoginResponse?, error: String?) -> Unit) {
         coroutineScope.launch {
             val result = repository.login(username, password)
             result.fold(
                 onSuccess = { loginResponse ->
-                    Log.d("AuthController", "Login successful: $loginResponse")
+                    Log.d("AuthController", "Login successful for user: ${loginResponse.username}")
                     sessionManager.saveLoginDetails(
-                        token = loginResponse.token,
                         expiresIn = loginResponse.expiresIn,
                         userId = loginResponse.userId,
                         username = loginResponse.username,
-                        role = loginResponse.role  // Ensure role is saved
+                        role = loginResponse.role
                     )
                     withContext(Dispatchers.Main) {
-                        onResult(true, null)
+                        onResult(loginResponse, null)
                     }
                 },
                 onFailure = { error ->
                     Log.e("AuthController", "Login failed: ${error.message}", error)
                     withContext(Dispatchers.Main) {
-                        onResult(false, error.message ?: "Unknown error")
+                        onResult(null, error.message ?: "Unknown error")
                     }
                 }
             )
@@ -59,18 +63,16 @@ class AuthController(
         email: String,
         password: String,
         role: String,
-        onResult: (Boolean, String?) -> Unit
+        onResult: (response: LoginResponse?, error: String?) -> Unit
     ) {
         coroutineScope.launch {
-            val signupRequest = SignupRequest(username, email, password, role) // Wrap parameters in object
-            val result = repository.signup(signupRequest) // Pass as single object
+            val signupRequest = SignupRequest(username, email, password, role)
+            val result = repository.signup(signupRequest)
 
             result.fold(
                 onSuccess = { signupResponse ->
                     Log.d("AuthController", "Signup successful: ${signupResponse.username}")
-
                     sessionManager.saveLoginDetails(
-                        token = signupResponse.token,
                         expiresIn = signupResponse.expiresIn,
                         userId = signupResponse.userId,
                         username = signupResponse.username,
@@ -78,13 +80,13 @@ class AuthController(
                     )
 
                     withContext(Dispatchers.Main) {
-                        onResult(true, null)
+                        onResult(signupResponse, null)
                     }
                 },
                 onFailure = { error ->
                     Log.e("AuthController", "Signup failed: ${error.message}", error)
                     withContext(Dispatchers.Main) {
-                        onResult(false, error.message ?: "Signup failed")
+                        onResult(null, error.message ?: "Signup failed")
                     }
                 }
             )
@@ -96,15 +98,25 @@ class AuthController(
     /**
      * Handle logout
      */
-    fun logout(context: Context) { // Pass context from activity
+    fun logout(app: Application) {
         coroutineScope.launch {
+            val isBiometricEnabled = sessionManager.isBiometricLoginEnabled()
+            val encTokenPair = sessionManager.getEncryptedTokenAndIv()
+            Log.d("AuthController", "Logout - Before clearing session: biometric enabled=$isBiometricEnabled, token=${encTokenPair.first != null}, iv=${encTokenPair.second != null}")
+            
             sessionManager.clearSession()
+
+            val isBiometricEnabledAfter = sessionManager.isBiometricLoginEnabled()
+            val encTokenPairAfter = sessionManager.getEncryptedTokenAndIv()
+            Log.d("AuthController", "Logout - After clearing session: biometric enabled=$isBiometricEnabledAfter, token=${encTokenPairAfter.first != null}, iv=${encTokenPairAfter.second != null}")
+
+            Log.d("AuthController", "User logged out, session and tokens cleared.")
+
             withContext(Dispatchers.Main) {
-                val intent = Intent(context, AuthActivity::class.java)
+                val intent = Intent(app, AuthActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                context.startActivity(intent) // Fix the issue
+                app.startActivity(intent)
             }
-            Log.d("AuthController", "User logged out")
         }
     }
 }

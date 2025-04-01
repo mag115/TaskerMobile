@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.local.TaskerDatabase
 import com.taskermobile.data.model.Task
 import com.taskermobile.data.repository.TaskRepository
@@ -16,7 +16,11 @@ import com.taskermobile.databinding.FragmentMyTasksBinding
 import com.taskermobile.ui.adapters.TaskAdapter
 import com.taskermobile.ui.main.controllers.MyTasksController
 import androidx.activity.result.contract.ActivityResultContracts
+
 import kotlinx.coroutines.flow.first
+
+import android.app.Application
+
 
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +31,7 @@ import kotlinx.coroutines.withContext
 class MyTasksFragment : Fragment() {
     private var _binding: FragmentMyTasksBinding? = null
     private val binding get() = _binding!!
+    private lateinit var application: Application
 
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var sessionManager: SessionManager
@@ -65,6 +70,7 @@ class MyTasksFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        application = requireActivity().application 
         setupDependencies()
         setupRecyclerView()
         setupSwipeRefresh()
@@ -79,7 +85,7 @@ class MyTasksFragment : Fragment() {
         val projectDao = database.projectDao()
         val userDao = database.userDao()
         val notificationDao = database.notificationDao()
-        val taskService = RetrofitClient.createService<TaskService>(sessionManager)
+        val taskService = RetroFitClient.createService<TaskService>(application, sessionManager)
 
         val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao, notificationDao)
 

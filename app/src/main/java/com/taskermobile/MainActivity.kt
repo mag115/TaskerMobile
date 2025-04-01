@@ -20,7 +20,7 @@ import androidx.navigation.ui.*
 import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
-import com.taskermobile.data.api.RetrofitClient
+import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
@@ -77,12 +77,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupProjectSelector() {
-        // Get  ProjectSelectorView from the toolbar (it’s defined in your MaterialToolbar)
+            // Get  ProjectSelectorView from the toolbar (it's defined in your MaterialToolbar)
         val projectSelector = findViewById<ProjectSelectorView>(R.id.projectSelector)
 
         // Instantiate ProjectRepository
         val projectDao = (application as TaskerApplication).database.projectDao()
-        val projectService = RetrofitClient.createService<com.taskermobile.data.service.ProjectService>(sessionManager)
+        val projectService = RetroFitClient.createService<com.taskermobile.data.service.ProjectService>(application, sessionManager)
         val projectRepository = com.taskermobile.data.repository.ProjectRepository(projectService, projectDao)
 
         // Now load the projects from the repository.
@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         sessionManager = SessionManager(this)
 
         // Initialize AuthController
-        val authRepository = AuthRepository(RetrofitClient.authApiService)
+        val authRepository = AuthRepository(RetroFitClient.authApiService)
         authController = AuthController(authRepository, sessionManager)
     }
 
@@ -150,10 +150,17 @@ class MainActivity : AppCompatActivity() {
 
         logoutButton?.setOnClickListener {
             lifecycleScope.launch {
-                sessionManager.clearSession()
-                authController.logout(this@MainActivity)
+                val isBiometricEnabled = sessionManager.isBiometricLoginEnabled()
+                val (encToken, encIv) = sessionManager.getEncryptedTokenAndIv()
+                android.util.Log.d("MainActivity", "Before Logout - Biometric state: enabled=$isBiometricEnabled, hasToken=${encToken != null}, hasIv=${encIv != null}")
+                
+                authController.logout(application)
+                
+                val isBiometricEnabledAfter = sessionManager.isBiometricLoginEnabled()
+                val (encTokenAfter, encIvAfter) = sessionManager.getEncryptedTokenAndIv()
+                android.util.Log.d("MainActivity", "After Logout - Biometric state: enabled=$isBiometricEnabledAfter, hasToken=${encTokenAfter != null}, hasIv=${encIvAfter != null}")
+                
                 Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
-                finish()
             }
         }
     }
