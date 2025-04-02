@@ -112,7 +112,6 @@ class TaskRepository(
         if (task != null) {
             task.comments.add(comment)
             taskDao.updateTask(task)
-
         }
     }
 

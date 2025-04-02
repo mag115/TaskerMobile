@@ -23,6 +23,7 @@ import com.taskermobile.data.session.SessionManager
 import com.taskermobile.ui.auth.AuthActivity
 import com.taskermobile.ui.auth.controllers.AuthController
 import com.taskermobile.util.CryptographyManager
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 import javax.crypto.Cipher
@@ -159,7 +160,7 @@ class SignupFragment : Fragment() {
         val email = binding.emailInput.text.toString()
         val password = binding.passwordInput.text.toString()
         val confirmPassword = binding.confirmPasswordInput.text.toString()
-        val role = binding.roleSpinner.selectedItem.toString() // Capture role
+        val role = binding.roleSpinner.selectedItem.toString()
 
         if (!validatePasswords(password, confirmPassword)) {
             showError("Passwords don't match")
@@ -272,6 +273,17 @@ class SignupFragment : Fragment() {
                     Log.d(TAG, "Encrypting and saving token after biometric auth.")
                     val encryptedData = cryptographyManager.encryptData(tokenToEncrypt, cipher)
                     sessionManager.saveEncryptedToken(encryptedData.ciphertext, encryptedData.initializationVector)
+                    val userId = sessionManager.userId.first()
+                    val username = sessionManager.username.first()
+                    val role = sessionManager.role.first()
+
+                    sessionManager.saveEncryptedUserData(
+                        encryptedToken = encryptedData.ciphertext,
+                        iv = encryptedData.initializationVector,
+                        userId = userId ?: 0L,
+                        username = username ?: "Unknown",
+                        role = role ?: "Unknown"
+                    )
                     sessionManager.setBiometricLoginEnabled(true)
                     Log.i(TAG, "Biometric login enabled and token encrypted.")
                 } catch (e: Exception) {

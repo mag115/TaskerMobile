@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import com.taskermobile.R
+import kotlinx.coroutines.flow.first
 
 class MyProfileFragment : Fragment() {
 
@@ -32,7 +34,8 @@ class MyProfileFragment : Fragment() {
                 binding.imageViewAvatar.setImageURI(it)
 
                 lifecycleScope.launch {
-                    sessionManager.saveProfilePictureUri(it.toString())
+                    val userId = sessionManager.userId.first() ?: return@launch
+                    sessionManager.saveProfilePictureUri(it.toString(), userId)
                 }
             }
         }
@@ -52,8 +55,9 @@ class MyProfileFragment : Fragment() {
 
         sessionManager = SessionManager(requireContext())
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             sessionManager.username.collectLatest { username ->
+                Log.d("MyProfileFragment", "Received username from DataStore: $username")
                 binding.textViewUsername.text = username ?: "Unknown User"
             }
         }
@@ -67,18 +71,21 @@ class MyProfileFragment : Fragment() {
             pickImageLauncher.launch("image/*")
         }
         lifecycleScope.launch {
-            sessionManager.profilePictureUri.collectLatest { uriString ->
-                uriString?.let {
-                    val uri = Uri.parse(it)
-                    try {
-                        binding.imageViewAvatar.setImageURI(uri)
-                    } catch (e: SecurityException) {
-                        e.printStackTrace()
-                        binding.imageViewAvatar.setImageResource(R.drawable.ic_person)
+            sessionManager.userId.collectLatest { userId ->
+                if (userId != null) {
+                    sessionManager.profilePictureUri(userId).collectLatest { uriString ->
+                        uriString?.let {
+                            val uri = Uri.parse(it)
+                            try {
+                                binding.imageViewAvatar.setImageURI(uri)
+                            } catch (e: SecurityException) {
+                                e.printStackTrace()
+                                binding.imageViewAvatar.setImageResource(R.drawable.ic_person)
+                            }
+                        }
                     }
                 }
             }
-
         }
     }
 

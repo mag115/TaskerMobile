@@ -7,27 +7,32 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.taskermobile.data.model.Project
 import android.util.Base64
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 
-class SessionManager(private val context: Context) {
+class SessionManager(val context: Context) {
 
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("token")
         private val USER_ID_KEY = longPreferencesKey("user_id")
         private val CURRENT_PROJECT_ID_KEY = longPreferencesKey("current_project_id")
-        private val CURRENT_PROJECT_KEY = stringPreferencesKey("current_project") // New key for full project details
-        private val ENCRYPTED_AUTH_TOKEN_KEY = stringPreferencesKey("encrypted_auth_token") // Encrypted token (Base64)
-        private val AUTH_TOKEN_IV_KEY = stringPreferencesKey("auth_token_iv") // IV for token decryption (Base64)
+        private val CURRENT_PROJECT_KEY =
+            stringPreferencesKey("current_project") // New key for full project details
+        private val ENCRYPTED_AUTH_TOKEN_KEY =
+            stringPreferencesKey("encrypted_auth_token") // Encrypted token (Base64)
+        private val AUTH_TOKEN_IV_KEY =
+            stringPreferencesKey("auth_token_iv") // IV for token decryption (Base64)
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val ROLE_KEY = stringPreferencesKey("role")
         private val PROJECTS_KEY = stringPreferencesKey("projects")
         private val EXPIRES_AT = longPreferencesKey("expires_at")
         private val PROFILE_PIC_URI_KEY = stringPreferencesKey("profile_pic_uri")
-        private val BIOMETRIC_ENABLED_KEY = booleanPreferencesKey("biometric_enabled") // New key for biometric preference
+        private val BIOMETRIC_ENABLED_KEY =
+            booleanPreferencesKey("biometric_enabled") // New key for biometric preference
     }
 
     val token = context.dataStore.data.map { it[TOKEN_KEY] }
@@ -37,7 +42,8 @@ class SessionManager(private val context: Context) {
     val currentProjectId: Flow<Long?> = context.dataStore.data.map { it[CURRENT_PROJECT_ID_KEY] }
 
     // Flows for encrypted token and IV (stored as Base64 strings)
-    val encryptedAuthTokenFlow: Flow<String?> = context.dataStore.data.map { it[ENCRYPTED_AUTH_TOKEN_KEY] }
+    val encryptedAuthTokenFlow: Flow<String?> =
+        context.dataStore.data.map { it[ENCRYPTED_AUTH_TOKEN_KEY] }
     val authTokenIvFlow: Flow<String?> = context.dataStore.data.map { it[AUTH_TOKEN_IV_KEY] }
 
     // Flow to observe if biometric login is enabled by the user
@@ -63,8 +69,11 @@ class SessionManager(private val context: Context) {
         userId: Long,
         username: String,
         role: String
+
     ) {
-        val expiresAt = System.currentTimeMillis() + expiresIn * 1000 // Assuming expiresIn is in seconds
+        Log.d("SessionManager", "saveLoginDetails: userId=$userId, username=$username, role=$role")
+        val expiresAt =
+            System.currentTimeMillis() + expiresIn * 1000 // Assuming expiresIn is in seconds
         context.dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = userId
             preferences[USERNAME_KEY] = username
@@ -73,15 +82,22 @@ class SessionManager(private val context: Context) {
         }
     }
 
-    suspend fun saveProfilePictureUri(uri: String) {
+    suspend fun saveProfilePictureUri(uri: String, userId: Long) {
         context.dataStore.edit { preferences ->
-            preferences[PROFILE_PIC_URI_KEY] = uri
+            preferences[stringPreferencesKey("profile_pic_uri_$userId")] = uri
+        }
+    }
+
+    fun profilePictureUri(userId: Long): Flow<String?> {
+        return context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("profile_pic_uri_$userId")]
         }
     }
 
     val profilePictureUri: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[PROFILE_PIC_URI_KEY]
     }
+
     // Save encrypted token and IV (as Base64 strings)
     suspend fun saveEncryptedToken(encryptedToken: ByteArray, iv: ByteArray) {
         val encodedToken = Base64.encodeToString(encryptedToken, Base64.NO_WRAP)
@@ -89,6 +105,34 @@ class SessionManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[ENCRYPTED_AUTH_TOKEN_KEY] = encodedToken
             preferences[AUTH_TOKEN_IV_KEY] = encodedIv
+        }
+    }
+    suspend fun getEncryptedUserInfo(): EncryptedUserInfo? {
+        val prefs = context.dataStore.data.first()
+        val json = prefs[stringPreferencesKey("encrypted_user_info")] ?: return null
+        return try {
+            Gson().fromJson(json, EncryptedUserInfo::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    data class EncryptedUserInfo(val userId: Long, val username: String, val role: String)
+    private val ENCRYPTED_USER_INFO_KEY = stringPreferencesKey("encrypted_user_info")
+    suspend fun saveEncryptedUserData(
+        encryptedToken: ByteArray,
+        iv: ByteArray,
+        userId: Long,
+        username: String,
+        role: String
+    ) {
+        val encodedToken = Base64.encodeToString(encryptedToken, Base64.NO_WRAP)
+        val encodedIv = Base64.encodeToString(iv, Base64.NO_WRAP)
+        val userInfoJson = Gson().toJson(EncryptedUserInfo(userId, username, role))
+
+        context.dataStore.edit { preferences ->
+            preferences[ENCRYPTED_AUTH_TOKEN_KEY] = encodedToken
+            preferences[AUTH_TOKEN_IV_KEY] = encodedIv
+            preferences[ENCRYPTED_USER_INFO_KEY] = userInfoJson
         }
     }
 
@@ -183,23 +227,16 @@ class SessionManager(private val context: Context) {
             val biometricEnabled = preferences[BIOMETRIC_ENABLED_KEY]
             val encryptedToken = preferences[ENCRYPTED_AUTH_TOKEN_KEY]
             val tokenIv = preferences[AUTH_TOKEN_IV_KEY]
+            val encryptedUserInfo = preferences[ENCRYPTED_USER_INFO_KEY]
 
             preferences.clear()
 
-            // Restore preserved values
-            if (biometricEnabled != null) {
-                 preferences[BIOMETRIC_ENABLED_KEY] = biometricEnabled
-            }
-
-            if (encryptedToken != null) {
-                 preferences[ENCRYPTED_AUTH_TOKEN_KEY] = encryptedToken
-            }
-            if (tokenIv != null) {
-                 preferences[AUTH_TOKEN_IV_KEY] = tokenIv
-            }
+            if (biometricEnabled != null) preferences[BIOMETRIC_ENABLED_KEY] = biometricEnabled
+            if (encryptedToken != null) preferences[ENCRYPTED_AUTH_TOKEN_KEY] = encryptedToken
+            if (tokenIv != null) preferences[AUTH_TOKEN_IV_KEY] = tokenIv
+            if (encryptedUserInfo != null) preferences[ENCRYPTED_USER_INFO_KEY] = encryptedUserInfo  // <-- ADD THIS
         }
     }
-
     // Clears only the raw (unencrypted) token
     suspend fun clearToken() {
         context.dataStore.edit {
