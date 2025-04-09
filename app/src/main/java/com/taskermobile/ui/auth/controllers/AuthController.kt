@@ -5,8 +5,11 @@ import android.content.Intent
 import android.util.Log
 import android.app.Application
 import com.taskermobile.TaskerApplication
+import com.taskermobile.data.local.TaskerDatabase
+import com.taskermobile.data.local.entity.UserEntity
 import com.taskermobile.data.model.LoginResponse
 import com.taskermobile.data.model.SignupRequest
+import com.taskermobile.data.model.User
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.ui.auth.AuthActivity
@@ -26,7 +29,7 @@ class AuthController(
     /**
      * Handle user login
      */
-    fun login(username: String, password: String, onResult: (response: LoginResponse?, error: String?) -> Unit) {
+    fun login(username: String, password: String, context: Context, onResult: (response: LoginResponse?, error: String?) -> Unit) {
         coroutineScope.launch {
             val result = repository.login(username, password)
             result.fold(
@@ -38,6 +41,10 @@ class AuthController(
                         username = loginResponse.username,
                         role = loginResponse.role
                     )
+                    
+                    // Ensure user exists in Room database
+                    ensureUserExistsInDatabase(loginResponse, context)
+                    
                     withContext(Dispatchers.Main) {
                         onResult(loginResponse, null)
                     }
@@ -52,17 +59,43 @@ class AuthController(
         }
     }
 
-
+    private suspend fun ensureUserExistsInDatabase(loginResponse: LoginResponse, context: Context) {
+        try {
+            val database = TaskerDatabase.getDatabase(context)
+            val userDao = database.userDao()
+            
+            // Check if user already exists in database
+            val existingUser = userDao.getUserById(loginResponse.userId)
+            
+            if (existingUser == null) {
+                // Create new user entity
+                Log.d("AuthController", "Creating new user entity in database for user: ${loginResponse.username}")
+                val userEntity = UserEntity(
+                    id = loginResponse.userId,
+                    username = loginResponse.username,
+                    email = null, // Not provided in login response
+                    role = loginResponse.role,
+                    isSynced = true,
+                    imageUri = null // Initially no profile image
+                )
+                userDao.insertUser(userEntity)
+            } else {
+                Log.d("AuthController", "User already exists in database: ${existingUser.username}")
+            }
+        } catch (e: Exception) {
+            Log.e("AuthController", "Error ensuring user exists in database", e)
+        }
+    }
 
     /**
      * Handle user signup
      */
-
     fun signup(
         username: String,
         email: String,
         password: String,
         role: String,
+        context: Context,
         onResult: (response: LoginResponse?, error: String?) -> Unit
     ) {
         coroutineScope.launch {
@@ -78,6 +111,9 @@ class AuthController(
                         username = signupResponse.username,
                         role = signupResponse.role
                     )
+                    
+                    // Ensure user exists in Room database
+                    ensureUserExistsInDatabase(signupResponse, context)
 
                     withContext(Dispatchers.Main) {
                         onResult(signupResponse, null)
@@ -93,8 +129,6 @@ class AuthController(
         }
     }
 
-
-
     /**
      * Handle logout
      */
@@ -102,6 +136,7 @@ class AuthController(
         coroutineScope.launch {
             val isBiometricEnabled = sessionManager.isBiometricLoginEnabled()
             val encTokenPair = sessionManager.getEncryptedTokenAndIv()
+    
             Log.d("AuthController", "Logout - Before clearing session: biometric enabled=$isBiometricEnabled, token=${encTokenPair.first != null}, iv=${encTokenPair.second != null}")
             
             sessionManager.clearSession()

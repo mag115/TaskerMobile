@@ -47,9 +47,15 @@ class ProjectsFragment : Fragment() {
 
     private fun setupDependencies() {
         sessionManager = SessionManager(requireContext())
-        val application = requireActivity().application
-        val projectDao = (application as TaskerApplication).database.projectDao()
-        projectController = ProjectController(sessionManager, projectDao, application)
+        val application = requireActivity().application as TaskerApplication
+        val database = application.database
+        projectController = ProjectController(
+            sessionManager,
+            database.projectDao(),
+            database.taskDao(),
+            database.userDao(),
+            application
+        )
     }
 
     private fun setupRecyclerView() {

@@ -16,7 +16,7 @@ data class Task(
     val dependency: Long?,
     val progress: Double?,
     val manualProgress: Double?,
-    val isDeleted: Boolean? = false,
+    val isDeleted: Boolean = false,
     var isTracking: Boolean,
     var timerId: Long? = null,
     
@@ -34,7 +34,7 @@ data class Task(
     var timeSpent: Double = 0.0,
     var elapsedTime: Double = 0.0,
     val scheduledProgress: Double? = null,
-
+    val isSynced: Boolean = false,
     var comments: MutableList<String> = mutableListOf(),
     var imageUri: String? = null
 ) {

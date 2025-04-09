@@ -21,5 +21,7 @@ data class Project(
     val members: List<User> = emptyList(),
 
     @SerializedName("owner")
-    val owner: User? = null
+    val owner: User? = null,
+
+    val isSynced: Boolean = false
 )

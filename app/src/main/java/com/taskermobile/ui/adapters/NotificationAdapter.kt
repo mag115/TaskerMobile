@@ -11,6 +11,7 @@ import com.taskermobile.databinding.ItemNotificationBinding
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class NotificationAdapter(private val onClick: (NotificationEntity) -> Unit) :
     ListAdapter<NotificationEntity, NotificationAdapter.ViewHolder>(NotificationDiffCallback()) {
@@ -31,9 +32,10 @@ class NotificationAdapter(private val onClick: (NotificationEntity) -> Unit) :
         fun bind(notification: NotificationEntity) {
             binding.notificationMessage.text = notification.message
 
-            // Format timestamp (convert from Long to readable date)
+            // Format timestamp using a more reliable approach
             val dateFormat = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
-            val formattedDate = dateFormat.format(Date(notification.timestamp))
+            dateFormat.timeZone = TimeZone.getDefault() // Use device's timezone
+            val formattedDate = dateFormat.format(Date(notification.timestampMillis))
             binding.notificationTimestamp.text = formattedDate
 
             // Show/hide red dot for unread messages

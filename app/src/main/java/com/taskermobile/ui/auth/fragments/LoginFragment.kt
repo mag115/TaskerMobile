@@ -246,7 +246,7 @@ class LoginFragment : Fragment() {
         val username = binding.usernameInput.text.toString()
         val password = binding.passwordInput.text.toString()
 
-        authController.login(username, password) { response, message ->
+        authController.login(username, password, requireContext()) { response, message ->
             loading = false
             activity?.runOnUiThread {
                 updateLoadingState()

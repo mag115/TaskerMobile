@@ -4,15 +4,20 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
@@ -24,9 +29,12 @@ import com.taskermobile.data.api.RetroFitClient
 import com.taskermobile.data.repository.AuthRepository
 import com.taskermobile.data.session.SessionManager
 import com.taskermobile.databinding.ActivityMainBinding
+import com.taskermobile.navigation.NavigationManager
 import com.taskermobile.ui.auth.controllers.AuthController
+import com.taskermobile.ui.main.controllers.MainViewModel
 import com.taskermobile.ui.shared.ProjectSelectorView
 import com.taskermobile.workers.NotificationWorker
+import com.taskermobile.workers.UnreadNotificationWorker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
@@ -38,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var authController: AuthController
-
+    private val viewModel: MainViewModel by viewModels()
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATIONS = 1001
@@ -46,30 +54,41 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate called")
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setupDependencies()
         setupToolbar()
         setupNavigation()
+        Log.d("MainActivity", "Calling requestNotificationPermission")
         requestNotificationPermission()
         setupProjectSelector()
+
+        // Update title when destination changes
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val titleTextView = findViewById<TextView>(R.id.toolbarTitle)
+            titleTextView.text = destination.label
+        }
 
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.navigation_project_report -> {
-                    // Pop the back stack up to the graph's start destination,
-                    // then navigate to the report list destination.
                     val navOptions = NavOptions.Builder()
-                        // Clear everything so that we start fresh.
                         .setPopUpTo(navController.graph.startDestinationId, true)
                         .build()
                     navController.navigate(R.id.navigation_project_report, null, navOptions)
                     drawerLayout.closeDrawers()
                     true
                 }
+                R.id.navigation_logout -> {
+                    lifecycleScope.launch {
+                        sessionManager.clearSession()
+                        NavigationManager.navigateToAuth(this@MainActivity)
+                    }
+                    true
+                }
                 else -> {
-                    // For all other items, use the default behavior.
                     NavigationUI.onNavDestinationSelected(menuItem, navController)
                 }
             }
@@ -77,57 +96,47 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupProjectSelector() {
-            // Get  ProjectSelectorView from the toolbar (it's defined in your MaterialToolbar)
+        // Get ProjectSelectorView from the toolbar
         val projectSelector = findViewById<ProjectSelectorView>(R.id.projectSelector)
 
-        // Instantiate ProjectRepository
-        val projectDao = (application as TaskerApplication).database.projectDao()
-        val projectService = RetroFitClient.createService<com.taskermobile.data.service.ProjectService>(application, sessionManager)
-        val projectRepository = com.taskermobile.data.repository.ProjectRepository(projectService, projectDao)
-
-        // Now load the projects from the repository.
+        // Set up lifecycle-aware collection of projects from the ViewModel
         lifecycleScope.launch {
-            try {
-                // Use .first() to get the current list from the Flow
-                val projects = projectRepository.getLocalProjects().first()
-                println("Loaded projects: ${projects.size}")
-                if (projects.isNotEmpty()) {
-                    projectSelector.setProjects(projects)
-                    projectSelector.setCurrentProject(projects.first())
-                } else {
-                    // Optionally, you can call a refresh method to load from remote.
-                    // For example: projectRepository.refreshProjects()
-                    Toast.makeText(this@MainActivity, "No projects available", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, "Error loading projects: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Continuously collect updates from the local database
-        lifecycleScope.launch {
-            projectRepository.getLocalProjects().collect { projects ->
-                if (projects.isNotEmpty()) {
-                    projectSelector.setProjects(projects)
-                    // Optionally, update the current project if none is set
-                    if (projectSelector.getCurrentProject() == null) {
-                        projectSelector.setCurrentProject(projects.first())
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observe the projects list
+                viewModel.projects.collect { projects ->
+                    if (projects.isNotEmpty()) {
+                        projectSelector.setProjects(projects)
                     }
-                } else {
-                    Toast.makeText(this@MainActivity, "No projects available", Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        // Set the listener to update global state when a project is selected.
-        projectSelector.setOnProjectSelectedListener { selectedProject ->
-            lifecycleScope.launch {
-                sessionManager.saveCurrentProject(selectedProject)
+        // Observe the current selected project
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.currentProject.collect { project ->
+                    project?.let {
+                        projectSelector.setCurrentProject(it)
+                    }
+                }
             }
+        }
+
+        // Observe loading state
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isLoading.collect { isLoading ->
+                    projectSelector.showLoading(isLoading)
+                }
+            }
+        }
+
+        // Set the listener to update when a project is selected
+        projectSelector.setOnProjectSelectedListener { selectedProject ->
+            viewModel.onProjectSelected(selectedProject)
             Toast.makeText(this, "Switched to project: ${selectedProject.name}", Toast.LENGTH_SHORT).show()
         }
     }
-
 
     private fun setupDependencies() {
         sessionManager = SessionManager(this)
@@ -137,34 +146,15 @@ class MainActivity : AppCompatActivity() {
         authController = AuthController(authRepository, sessionManager)
     }
 
-
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false) // Hide the default title
 
-        val logoutButton = findViewById<Button>(R.id.logoutButton)
-        val backButton = findViewById<ImageButton>(R.id.backButton)
+        val titleTextView = findViewById<TextView>(R.id.toolbarTitle)
 
-        backButton?.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
-
-        logoutButton?.setOnClickListener {
-            lifecycleScope.launch {
-                val isBiometricEnabled = sessionManager.isBiometricLoginEnabled()
-                val (encToken, encIv) = sessionManager.getEncryptedTokenAndIv()
-                android.util.Log.d("MainActivity", "Before Logout - Biometric state: enabled=$isBiometricEnabled, hasToken=${encToken != null}, hasIv=${encIv != null}")
-                
-                authController.logout(application)
-                
-                val isBiometricEnabledAfter = sessionManager.isBiometricLoginEnabled()
-                val (encTokenAfter, encIvAfter) = sessionManager.getEncryptedTokenAndIv()
-                android.util.Log.d("MainActivity", "After Logout - Biometric state: enabled=$isBiometricEnabledAfter, hasToken=${encTokenAfter != null}, hasIv=${encIvAfter != null}")
-                
-                Toast.makeText(this@MainActivity, "Logged Out", Toast.LENGTH_SHORT).show()
-            }
-        }
+        // Set the initial title text
+        titleTextView.text = getString(R.string.app_name)
     }
-
 
     private fun setupNavigation() {
         drawerLayout = binding.drawerLayout
@@ -184,19 +174,20 @@ class MainActivity : AppCompatActivity() {
             ), drawerLayout
         )
 
-        setupActionBarWithNavController(navController, appBarConfiguration)
+        // Setup bottom navigation with NavController
         binding.bottomNavigation.setupWithNavController(navController)
         binding.navigationView.setupWithNavController(navController)
 
-        val toolbar = binding.appBarLayout.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
-
+        // Setup ActionBarDrawerToggle
         val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, toolbar,
+            this, drawerLayout, binding.toolbar,
             R.string.navigation_drawer_open, R.string.navigation_drawer_close
         )
+        
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        // Setup role-based navigation
         lifecycleScope.launch {
             val role = sessionManager.role.first() ?: "TEAM_MEMBER"
             updateBottomNavigationMenu(role)
@@ -223,35 +214,58 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNotificationWorker() {
-        val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-            )
-            .build()
+        Log.d("MainActivity", "Setting up notification workers")
+        try {
+            // Set up the standard notification worker
+            val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(15, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "NotificationWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "NotificationWorker",
+                ExistingPeriodicWorkPolicy.REPLACE,
+                workRequest
+            )
+            Log.d("MainActivity", "Standard notification worker started")
+
+            // Start unread notification worker
+            UnreadNotificationWorker.startPolling(this)
+            Log.d("MainActivity", "Unread notification polling started")
+            
+            // Do an immediate check for unread notifications
+            UnreadNotificationWorker.checkForUnreadNotifications(this)
+            Log.d("MainActivity", "Triggered immediate notification check")
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error setting up notification workers", e)
+        }
     }
 
     private fun requestNotificationPermission() {
+        Log.d("MainActivity", "requestNotificationPermission called")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
+            Log.d("MainActivity", "Android version >= 13, checking permission")
+            val hasPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED
+            Log.d("MainActivity", "Has notification permission: $hasPermission")
+            
+            if (!hasPermission) {
+                Log.d("MainActivity", "Requesting notification permission from user")
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     REQUEST_CODE_NOTIFICATIONS
                 )
             } else {
+                Log.d("MainActivity", "Notification permission already granted, setting up worker")
                 setupNotificationWorker()
             }
         } else {
+            Log.d("MainActivity", "Android version < 13, no permission needed, setting up worker")
             setupNotificationWorker()
         }
     }
@@ -260,16 +274,46 @@ class MainActivity : AppCompatActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Log.d("MainActivity", "onRequestPermissionsResult called with requestCode: $requestCode")
         if (requestCode == REQUEST_CODE_NOTIFICATIONS) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            Log.d("MainActivity", "Notification permission granted: $granted")
+            if (granted) {
+                Log.d("MainActivity", "User granted notification permission, setting up worker")
                 setupNotificationWorker()
             } else {
+                Log.d("MainActivity", "User denied notification permission")
                 Toast.makeText(this, "Notifications disabled. Enable them in settings.", Toast.LENGTH_LONG).show()
             }
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // Stop unread notification polling when the app is destroyed
+        UnreadNotificationWorker.stopPolling(this)
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("MainActivity", "onResume called")
+        
+        // Check if notification permission is granted
+        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED
+        } else {
+            true // Permission not needed on earlier Android versions
+        }
+        
+        // Restart workers if we have permission
+        if (permissionGranted) {
+            Log.d("MainActivity", "Notification permission granted, starting workers")
+            setupNotificationWorker()
+        }
     }
 }

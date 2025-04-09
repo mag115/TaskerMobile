@@ -26,6 +26,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import android.util.Log
 
 class CreateTaskFragment : Fragment() {
     private var _binding: FragmentCreateTaskBinding? = null
@@ -71,9 +72,9 @@ class CreateTaskFragment : Fragment() {
         val taskRepository = TaskRepository(
             database.taskDao(),
             taskService,
-            database.projectDao(),
             database.userDao(),
-            database.notificationDao()
+            database.notificationDao(),
+            database.projectDao()
         )
 
         createTaskController = CreateTaskController(taskRepository, userService)
@@ -169,15 +170,21 @@ class CreateTaskFragment : Fragment() {
                 )
 
                 showLoading(true)
-                createTaskController.createTask(task) { success, errorMessage ->
-                    showLoading(false)
-                    if (success) {
+                try {
+                    val result = createTaskController.createTask(task)
+                    result.onSuccess { createdTask ->
+                        Log.d("CreateTaskFragment", "Task created successfully: ${createdTask.title}")
                         Toast.makeText(requireContext(), "Task created successfully", Toast.LENGTH_SHORT).show()
                         parentFragmentManager.popBackStack()
-                    } else {
-                        binding.errorText.text = errorMessage
-                        binding.errorText.visibility = View.VISIBLE
+                    }.onFailure { error ->
+                        Log.e("CreateTaskFragment", "Failed to create task", error)
+                        Toast.makeText(requireContext(), "Failed to create task: ${error.message}", Toast.LENGTH_LONG).show()
                     }
+                } catch (e: Exception) {
+                    Log.e("CreateTaskFragment", "Exception creating task", e)
+                    Toast.makeText(requireContext(), "Error creating task: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    showLoading(false)
                 }
             }
         }

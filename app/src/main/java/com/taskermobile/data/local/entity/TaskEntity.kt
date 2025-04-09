@@ -11,14 +11,6 @@ import com.taskermobile.data.model.User
 
 @Entity(
     tableName = "tasks",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProjectEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["projectId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [
         Index(value = ["projectId"]),
         Index(value = ["assignedUserId"])
@@ -42,7 +34,7 @@ data class TaskEntity(
     var comments: MutableList<String> = mutableListOf(),
 
     @ColumnInfo(name = "projectId")
-    val projectId: Long,
+    val projectId: Long?,
 
     @ColumnInfo(name = "assignedUserId")
     val assignedUserId: Long?,
@@ -57,7 +49,7 @@ data class TaskEntity(
     var imageUri: String? = null
 ) {
     fun toTask(project: Project? = null, assignedUser: User? = null): Task = Task(
-        id = id,
+        id = id ?: 0L,
         title = title,
         description = description,
         deadline = deadline,
@@ -74,13 +66,15 @@ data class TaskEntity(
         timerId = null, // No timerId in TaskEntity
         project = project,
         assignedUser = assignedUser,
-        projectId = projectId,
+        projectId = projectId ?: 0L,
         assignedUserId = assignedUserId,
         status = status,
         priority = priority,
         timeSpent = timeSpent,
         elapsedTime = elapsedTime,
-        scheduledProgress = scheduledProgress
+        scheduledProgress = scheduledProgress,
+        isSynced = isSynced,
+        imageUri = imageUri
     )
 
     companion object {
@@ -98,6 +92,7 @@ data class TaskEntity(
             progress = task.progress,
             manualProgress = task.manualProgress,
             isDeleted = task.isDeleted ?: false,
+            comments = task.comments?.toMutableList() ?: mutableListOf(),
             projectId = task.projectId,
             assignedUserId = task.assignedUserId,
             status = task.status,
@@ -105,7 +100,8 @@ data class TaskEntity(
             timeSpent = task.timeSpent,
             elapsedTime = task.elapsedTime,
             scheduledProgress = task.scheduledProgress,
-            imageUri=task.imageUri
+            isSynced = task.isSynced,
+            imageUri = task.imageUri
         )
     }
 }

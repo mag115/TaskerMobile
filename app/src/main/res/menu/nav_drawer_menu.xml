@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navigation_create_task"
@@ -13,4 +14,9 @@
         android:id="@+id/navigation_my_profile"
         android:icon="@drawable/ic_person"
         android:title="My Profile" />
+
+    <item
+        android:id="@+id/navigation_logout"
+        android:icon="@drawable/ic_logout"
+        android:title="Logout" />
 </menu>

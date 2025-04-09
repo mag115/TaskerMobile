@@ -171,7 +171,7 @@ class SignupFragment : Fragment() {
         updateLoadingState()
 
         lifecycleScope.launch {
-            authController.signup(username, email, password, role) { response, message ->
+            authController.signup(username, email, password, role, requireContext()) { response, message ->
                 loading = false
                 activity?.runOnUiThread {
                     updateLoadingState()

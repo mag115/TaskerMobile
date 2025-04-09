@@ -19,16 +19,16 @@ class TaskController(context: Context, sessionManager: SessionManager, applicati
     private val projectDao = database.projectDao()
     private val userDao = database.userDao()
     private val notificationDao = database.notificationDao()
-    private val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao, notificationDao)
+    private val taskRepository = TaskRepository(taskDao, taskService, userDao, notificationDao, projectDao)
 
-    suspend fun createTask(task: Task) {
+    suspend fun createTask(task: Task): Result<Task> {
         val project = projectDao.getProjectById(task.projectId)
         if (project == null) {
             Log.e("TaskController", "Project ID ${task.projectId} does not exist.")
-            return
+            return Result.failure(Exception("Project ID ${task.projectId} does not exist"))
         }
 
-        taskRepository.createTaskWithSync(task)
+        return taskRepository.createTaskWithSync(task)
     }
 
 
@@ -64,6 +64,24 @@ class TaskController(context: Context, sessionManager: SessionManager, applicati
             }
         } catch (e: Exception) {
             Log.e("TaskController", "Error adding comment", e)
+        }
+    }
+
+    suspend fun fetchTasksFromApi(projectId: Long?): List<Task>? {
+        Log.d("TaskController", "Fetching tasks from API for projectId: $projectId")
+        try {
+            val response = taskService.getAllTasks(projectId ?: 0)
+            if (response.isSuccessful) {
+                val tasks = response.body()
+                Log.d("TaskController", "Successfully fetched ${tasks?.size ?: 0} tasks from API")
+                return tasks
+            } else {
+                Log.e("TaskController", "API call failed: ${response.code()}")
+                return null
+            }
+        } catch (e: Exception) {
+            Log.e("TaskController", "Error fetching tasks from API", e)
+            return null
         }
     }
 }

@@ -9,6 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -34,12 +35,15 @@ interface TaskService {
         @Path("taskId") taskId: Long,
         @Body timeSpent: Double
     ): Response<Task>
-    //@GET("/assigned")
-    //suspend fun getAssignedTasks(@Query("project_id") projectId: Long = 1L): Response<List<Task>>
+
+    @PATCH("/tasks/{taskId}/status")
+    suspend fun updateTaskStatus(
+        @Path("taskId") taskId: Long,
+        @Body statusMap: Map<String, String>
+    ): Response<Task>
 
     @GET("/tasks/assigned")
     suspend fun getAssignedTasks(
-        @Query("username") username: String,
-        @Query("project_id") projectId: Long
+        @Query("projectId") projectId: Long? = null
     ): Response<List<Task>>
 }

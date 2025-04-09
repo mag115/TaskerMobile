@@ -48,12 +48,12 @@ fun TaskEntity.toDomain() = Task(
     timerId = null,
     project = null,
     assignedUser = null,
-    projectId = projectId,
+    projectId = projectId ?: 0L, // Provide default value for non-nullable field
     assignedUserId = assignedUserId,
     status = status,
     priority = priority,
     timeSpent = timeSpent,
     elapsedTime = elapsedTime,
     scheduledProgress = scheduledProgress,
-    imageUri=imageUri
+    imageUri = imageUri
 )

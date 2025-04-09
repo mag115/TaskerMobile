@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.Intent
 
 class MyTasksFragment : Fragment() {
     private var _binding: FragmentMyTasksBinding? = null
@@ -41,21 +42,32 @@ class MyTasksFragment : Fragment() {
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             Log.d("MyTasksFragment", "Picked image URI: $it")
-            val updatedTask = selectedTask.copy(imageUri = it.toString())
+            
+            try {
+                // Take a persistent URI permission to keep access after restart
+                requireContext().contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                
+                val updatedTask = selectedTask.copy(imageUri = it.toString())
 
-            val currentList = taskAdapter.currentList.toMutableList()
-            val index = currentList.indexOfFirst { it.id == selectedTask.id }
+                val currentList = taskAdapter.currentList.toMutableList()
+                val index = currentList.indexOfFirst { task -> task.id == selectedTask.id }
 
-            if (index != -1) {
-                currentList[index] = updatedTask
-                taskAdapter.submitList(currentList)
+                if (index != -1) {
+                    currentList[index] = updatedTask
+                    taskAdapter.submitList(currentList)
+                }
+
+                myTasksController.updateTask(updatedTask)
+                CoroutineScope(Dispatchers.IO).launch {
+                    myTasksController.taskDao.updateImageUri(updatedTask.id, updatedTask.imageUri ?: "")
+                    Log.d("MyTasksFragment", "Image URI saved to database: ${updatedTask.imageUri}")
+                }
+            } catch (e: SecurityException) {
+                Log.e("MyTasksFragment", "Failed to take persistent URI permission", e)
             }
-
-            myTasksController.updateTask(updatedTask)
-            CoroutineScope(Dispatchers.IO).launch {
-                myTasksController.taskDao.updateImageUri(updatedTask.id, updatedTask.imageUri ?: "")
-            }
-
         }
     }
 
@@ -82,12 +94,12 @@ class MyTasksFragment : Fragment() {
 
         val database = TaskerDatabase.getDatabase(requireContext())
         val taskDao = database.taskDao()
-        val projectDao = database.projectDao()
         val userDao = database.userDao()
+        val projectDao = database.projectDao()
         val notificationDao = database.notificationDao()
         val taskService = RetroFitClient.createService<TaskService>(application, sessionManager)
 
-        val taskRepository = TaskRepository(taskDao, taskService, projectDao, userDao, notificationDao)
+        val taskRepository = TaskRepository(taskDao, taskService, userDao, notificationDao, projectDao)
 
         myTasksController = MyTasksController(taskRepository, sessionManager, taskDao)
     }

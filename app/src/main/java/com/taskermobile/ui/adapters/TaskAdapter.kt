@@ -25,7 +25,7 @@ class TaskAdapter(
     private val taskActions: TaskActions,
     private val onTaskClick: (Task) -> Unit,
     private val onCommentSend: (Task, String) -> Unit,
-    private val onAttachPhoto: (Task) -> Unit //bætti við núna
+    private val onAttachPhoto: (Task) -> Unit 
 
 
 ) : ListAdapter<Task, TaskAdapter.TaskViewHolder>(TaskDiffCallback()) {
@@ -164,11 +164,6 @@ class TaskAdapter(
                 taskActions.stopTracking(task)
                 taskActions.updateTask(task)
             }
-
-
-              //  CoroutineScope(Dispatchers.IO).launch {
-                //    taskActions.stopTracking(task)
-                   // taskActions.updateTask(task)
 
             }
 

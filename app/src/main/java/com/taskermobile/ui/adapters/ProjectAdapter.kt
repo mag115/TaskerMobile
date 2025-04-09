@@ -32,8 +32,6 @@ class ProjectAdapter :
             binding.apply {
                 projectName.text = project.name
                 projectDescription.text = project.description
-                taskCount.text = "Tasks: ${project.tasks.size}"
-                memberCount.text = "Members: ${project.members.size}"
             }
         }
     }

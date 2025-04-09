@@ -28,15 +28,8 @@ class CreateTaskController(
         }
     }
 
-    // Create task and handle success or failure
-    fun createTask(task: Task, onComplete: (Boolean, String?) -> Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                taskRepository.insertTask(task)
-                withContext(Dispatchers.Main) { onComplete(true, null) }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) { onComplete(false, e.message) }
-            }
-        }
+    // Create task with sync
+    suspend fun createTask(task: Task): Result<Task> {
+        return taskRepository.createTaskWithSync(task)
     }
 }

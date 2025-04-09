@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import android.app.Application
 import com.taskermobile.TaskerApplication
 import com.taskermobile.data.api.NotificationApiService
+import com.taskermobile.data.local.entity.NotificationEntity
 
 class NotificationsFragment : Fragment() {
     private var _binding: FragmentNotificationsBinding? = null
@@ -27,6 +28,7 @@ class NotificationsFragment : Fragment() {
     private lateinit var adapter: NotificationAdapter
     private lateinit var sessionManager: SessionManager
     private lateinit var application: Application
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -41,20 +43,19 @@ class NotificationsFragment : Fragment() {
         setupRecyclerView()
         fetchNotifications()
 
-        binding.swipeRefresh.setOnRefreshListener { fetchNotifications() }
-        binding.fabRefreshNotifications.setOnClickListener { fetchNotifications() }
+        binding.swipeRefresh.setOnRefreshListener { refreshNotifications() }
+        binding.fabRefreshNotifications.setOnClickListener { refreshNotifications() }
     }
 
     private fun setupDependencies() {
         sessionManager = SessionManager(requireContext())
-        val application = requireActivity().application // Get application
+        val application = requireActivity().application
         val database = (application as TaskerApplication).database
         val notificationDao = database.notificationDao()
-        // Pass application and sessionManager
         val notificationApiService = RetroFitClient.createService<NotificationApiService>(application, sessionManager)
         val notificationRepository = NotificationRepository(notificationApiService, notificationDao)
 
-        notificationsController = NotificationsController(notificationRepository)
+        notificationsController = NotificationsController(notificationRepository, sessionManager)
     }
 
     private fun setupRecyclerView() {
@@ -73,23 +74,35 @@ class NotificationsFragment : Fragment() {
             errorText.visibility = View.GONE
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            notificationsController.fetchNotifications { notifications, unreadCount ->
-                // Check that the binding is still valid before updating the UI
-                val binding = _binding ?: return@fetchNotifications
+        notificationsController.fetchNotifications { notifications, unreadCount ->
+            updateUI(notifications, unreadCount)
+        }
+    }
 
-                binding.progressBar.visibility = View.GONE
-                binding.swipeRefresh.isRefreshing = false
+    private fun refreshNotifications() {
+        _binding?.apply {
+            progressBar.visibility = View.VISIBLE
+            errorText.visibility = View.GONE
+        }
 
-                if (notifications.isEmpty()) {
-                    binding.errorText.visibility = View.VISIBLE
-                    binding.notificationsRecyclerView.visibility = View.GONE
-                } else {
-                    binding.errorText.visibility = View.GONE
-                    binding.notificationsRecyclerView.visibility = View.VISIBLE
-                    adapter.submitList(notifications)
-                }
-            }
+        notificationsController.refreshNotifications { notifications, unreadCount ->
+            updateUI(notifications, unreadCount)
+        }
+    }
+
+    private fun updateUI(notifications: List<NotificationEntity>, unreadCount: Int) {
+        val binding = _binding ?: return
+
+        binding.progressBar.visibility = View.GONE
+        binding.swipeRefresh.isRefreshing = false
+
+        if (notifications.isEmpty()) {
+            binding.errorText.visibility = View.VISIBLE
+            binding.notificationsRecyclerView.visibility = View.GONE
+        } else {
+            binding.errorText.visibility = View.GONE
+            binding.notificationsRecyclerView.visibility = View.VISIBLE
+            adapter.submitList(notifications)
         }
     }
 
