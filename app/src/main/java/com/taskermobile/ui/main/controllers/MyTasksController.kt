@@ -51,13 +51,45 @@ class MyTasksController(
 
     override fun stopTracking(task: Task) {
         CoroutineScope(Dispatchers.IO).launch {
-            val startTime = task.timerId ?: return@launch
-            val timeElapsed = (System.currentTimeMillis() - startTime) / 1000
-
-            task.timeSpent += timeElapsed
+            val startTime = task.timerId
+            
+            if (startTime != null) {
+                // Calculate time elapsed since tracking started
+                val timeElapsedSinceStart = (System.currentTimeMillis() - startTime) / 1000
+                
+                // Check if the calculated time makes sense (in case of app restarts)
+                // Use the larger of timeSpent or calculated time to avoid losing progress
+                if (task.timeSpent < timeElapsedSinceStart) {
+                    Log.d("MyTasksController", "Using server-calculated time: $timeElapsedSinceStart seconds")
+                    task.timeSpent = timeElapsedSinceStart.toDouble()
+                } else {
+                    // If timeSpent is already larger, trust that value (comes from the TaskAdapter's timer)
+                    Log.d("MyTasksController", "Using adapter-calculated time: ${task.timeSpent} seconds")
+                }
+            }
+            
+            // Make sure tracking is stopped in any case
             task.isTracking = false
             task.timerId = null
+            
+            // Update task in repository
             taskRepository.updateTask(task)
+            Log.d("MyTasksController", "Stopped tracking task ${task.id}, final timeSpent: ${task.timeSpent}")
+        }
+    }
+
+    override fun updateTaskProgress(taskId: Long, manualProgress: Double) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = taskRepository.updateTaskProgress(taskId, manualProgress)
+                if (response.isSuccessful) {
+                    Log.d("MyTasksController", "Successfully updated task $taskId progress to $manualProgress%")
+                } else {
+                    Log.e("MyTasksController", "Failed to update task progress: ${response.code()} - ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("MyTasksController", "Error updating task progress", e)
+            }
         }
     }
 

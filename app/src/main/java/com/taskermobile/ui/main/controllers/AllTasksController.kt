@@ -75,5 +75,17 @@ class AllTasksController(private val taskController: TaskController) : TaskActio
             taskController.updateTask(task)
         }
     }
+
+    override fun updateTaskProgress(taskId: Long, manualProgress: Double) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Update task progress through the task controller
+                taskController.updateTaskProgress(taskId, manualProgress)
+                Log.d("AllTasksController", "Updated task $taskId progress to $manualProgress%")
+            } catch (e: Exception) {
+                Log.e("AllTasksController", "Failed to update task progress", e)
+            }
+        }
+    }
 }
 

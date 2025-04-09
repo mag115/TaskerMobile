@@ -423,17 +423,27 @@ class TaskRepository(
                         val taskEntity = TaskEntity.fromTask(task).copy(isSynced = false)
                         try {
                             Log.d("TaskRepository", "Attempting to save unsynced task to local database: ${taskEntity.title}")
-                            taskDao.insertTask(taskEntity)
+                            val insertedId = taskDao.insertTask(taskEntity)
+                            Log.d("TaskRepository", "Task inserted with ID: $insertedId")
                             
-                            // Verify the task was saved
-                            val savedTask = taskDao.getTaskById(taskEntity.id ?: 0)
+                            // Verify the task was saved using the returned ID
+                            val savedTask = taskDao.getTaskById(insertedId)
                             if (savedTask != null) {
-                                Log.d("TaskRepository", "Successfully verified unsynced task in database: ${savedTask.title}")
+                                Log.d("TaskRepository", "Successfully saved unsynced task in database: ${savedTask.title}")
                                 // Double check by getting all tasks
                                 val allTasks = taskDao.getAllTasksSync()
                                 Log.d("TaskRepository", "Current total tasks in database: ${allTasks.size}")
                                 Log.d("TaskRepository", "Task IDs in database: ${allTasks.map { it.id }}")
-                                return Result.failure(Exception(taskResponse.message ?: "Unknown error"))
+                                
+                                // Trigger sync of unsynced tasks
+                                try {
+                                    Log.d("TaskRepository", "Triggering sync of unsynced tasks")
+                                    syncUnsyncedTasks()
+                                } catch (syncError: Exception) {
+                                    Log.e("TaskRepository", "Failed to sync tasks with server", syncError)
+                                }
+                                
+                                return Result.success(savedTask.toTask().copy(isSynced = false))
                             } else {
                                 Log.e("TaskRepository", "Failed to verify unsynced task in database after insertion")
                                 return Result.failure(Exception("Failed to verify task in database"))
@@ -449,16 +459,26 @@ class TaskRepository(
                     val taskEntity = TaskEntity.fromTask(task).copy(isSynced = false)
                     try {
                         Log.d("TaskRepository", "Attempting to save task with null response to local database: ${taskEntity.title}")
-                        taskDao.insertTask(taskEntity)
+                        val insertedId = taskDao.insertTask(taskEntity)
+                        Log.d("TaskRepository", "Task inserted with ID: $insertedId")
                         
-                        // Verify the task was saved
-                        val savedTask = taskDao.getTaskById(taskEntity.id ?: 0)
+                        // Verify the task was saved using the returned ID
+                        val savedTask = taskDao.getTaskById(insertedId)
                         if (savedTask != null) {
                             Log.d("TaskRepository", "Successfully verified task with null response in database: ${savedTask.title}")
                             // Double check by getting all tasks
                             val allTasks = taskDao.getAllTasksSync()
                             Log.d("TaskRepository", "Current total tasks in database: ${allTasks.size}")
                             Log.d("TaskRepository", "Task IDs in database: ${allTasks.map { it.id }}")
+                            
+                            // Trigger sync of unsynced tasks
+                            try {
+                                Log.d("TaskRepository", "Triggering sync of unsynced tasks")
+                                syncUnsyncedTasks()
+                            } catch (syncError: Exception) {
+                                Log.e("TaskRepository", "Failed to sync tasks with server", syncError)
+                            }
+                            
                             return Result.failure(Exception("Empty response body"))
                         } else {
                             Log.e("TaskRepository", "Failed to verify task with null response in database after insertion")
@@ -475,16 +495,26 @@ class TaskRepository(
                 val taskEntity = TaskEntity.fromTask(task).copy(isSynced = false)
                 try {
                     Log.d("TaskRepository", "Attempting to save task after API failure to local database: ${taskEntity.title}")
-                    taskDao.insertTask(taskEntity)
+                    val insertedId = taskDao.insertTask(taskEntity)
+                    Log.d("TaskRepository", "Task inserted with ID: $insertedId")
                     
-                    // Verify the task was saved
-                    val savedTask = taskDao.getTaskById(taskEntity.id ?: 0)
+                    // Verify the task was saved using the returned ID
+                    val savedTask = taskDao.getTaskById(insertedId)
                     if (savedTask != null) {
                         Log.d("TaskRepository", "Successfully verified task after API failure in database: ${savedTask.title}")
                         // Double check by getting all tasks
                         val allTasks = taskDao.getAllTasksSync()
                         Log.d("TaskRepository", "Current total tasks in database: ${allTasks.size}")
                         Log.d("TaskRepository", "Task IDs in database: ${allTasks.map { it.id }}")
+                        
+                        // Trigger sync of unsynced tasks
+                        try {
+                            Log.d("TaskRepository", "Triggering sync of unsynced tasks")
+                            syncUnsyncedTasks()
+                        } catch (syncError: Exception) {
+                            Log.e("TaskRepository", "Failed to sync tasks with server", syncError)
+                        }
+                        
                         return Result.failure(HttpException(response))
                     } else {
                         Log.e("TaskRepository", "Failed to verify task after API failure in database after insertion")
@@ -502,16 +532,26 @@ class TaskRepository(
             val taskEntity = TaskEntity.fromTask(task).copy(isSynced = false)
             try {
                 Log.d("TaskRepository", "Attempting to save task after exception to local database: ${taskEntity.title}")
-                taskDao.insertTask(taskEntity)
+                val insertedId = taskDao.insertTask(taskEntity)
+                Log.d("TaskRepository", "Task inserted with ID: $insertedId")
                 
-                // Verify the task was saved
-                val savedTask = taskDao.getTaskById(taskEntity.id ?: 0)
+                // Verify the task was saved using the returned ID
+                val savedTask = taskDao.getTaskById(insertedId)
                 if (savedTask != null) {
                     Log.d("TaskRepository", "Successfully verified task after exception in database: ${savedTask.title}")
                     // Double check by getting all tasks
                     val allTasks = taskDao.getAllTasksSync()
                     Log.d("TaskRepository", "Current total tasks in database: ${allTasks.size}")
                     Log.d("TaskRepository", "Task IDs in database: ${allTasks.map { it.id }}")
+                    
+                    // Trigger sync of unsynced tasks
+                    try {
+                        Log.d("TaskRepository", "Triggering sync of unsynced tasks")
+                        syncUnsyncedTasks()
+                    } catch (syncError: Exception) {
+                        Log.e("TaskRepository", "Failed to sync tasks with server", syncError)
+                    }
+                    
                     return Result.failure(e)
                 } else {
                     Log.e("TaskRepository", "Failed to verify task after exception in database after insertion")
@@ -571,6 +611,32 @@ class TaskRepository(
             "timeSpent" to timeSpent as Any
         )
         return taskService.updateTime(timeRequest)
+    }
+
+    suspend fun updateTaskProgress(taskId: Long, manualProgress: Double): retrofit2.Response<Task> {
+        // Create a map with the manualProgress value
+        val progressMap = mapOf("manualProgress" to manualProgress)
+        
+        try {
+            // Call the backend API
+            val response = taskService.updateTaskProgress(taskId, progressMap)
+            
+            if (response.isSuccessful) {
+                // Update the local database if the API call was successful
+                val updatedTask = response.body()
+                if (updatedTask != null) {
+                    taskDao.updateTaskProgress(taskId, manualProgress)
+                    Log.d("TaskRepository", "Updated task $taskId progress to $manualProgress")
+                }
+            } else {
+                Log.e("TaskRepository", "Failed to update task progress: ${response.code()} - ${response.errorBody()?.string()}")
+            }
+            
+            return response
+        } catch (e: Exception) {
+            Log.e("TaskRepository", "Error updating task progress", e)
+            throw e
+        }
     }
 
     fun getAssignedTasks(projectId: Long? = null): Flow<List<Task>> {

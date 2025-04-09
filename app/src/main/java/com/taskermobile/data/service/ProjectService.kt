@@ -27,9 +27,6 @@ interface ProjectService {
     @POST("projects/current")
     suspend fun setCurrentProject(@Body body: Map<String, Long>): Response<Unit>
 
-    @POST("projects/{projectId}/members")
-    suspend fun addMemberToProject(@Path("projectId") projectId: Long, @Body body: Map<String, Long>): Response<Project>
-
     @POST("projects/{projectId}/tasks")
     suspend fun createTask(@Path("projectId") projectId: Long, @Body task: Task): Response<Task>
 } 

@@ -63,7 +63,6 @@ class SessionManager(val context: Context) {
         }
     }
 
-    // Save login metadata (token saved separately and encrypted)
     suspend fun saveLoginDetails(
         expiresIn: Long,
         userId: Long,

@@ -7,4 +7,5 @@ interface TaskActions {
     fun updateTask(task: Task)
     fun startTracking(task: Task)
     fun stopTracking(task: Task)
+    fun updateTaskProgress(taskId: Long, manualProgress: Double)
 }

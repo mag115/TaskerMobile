@@ -63,7 +63,6 @@ class CreateProjectFragment : Fragment() {
                         createdAt = currentTime,
                         updatedAt = currentTime,
                         tasks = emptyList(),
-                        members = emptyList(),
                         owner = null
                     )
 

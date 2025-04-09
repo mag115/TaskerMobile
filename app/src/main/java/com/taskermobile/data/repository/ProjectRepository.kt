@@ -53,12 +53,6 @@ class ProjectRepository(
                 taskDao.insertTask(taskEntity)
             }
             
-            // Insert members if any
-            project.members?.forEach { member ->
-                val userEntity = UserEntity.fromUser(member.copy(isSynced = false))
-                userDao.insertUser(userEntity)
-            }
-            
             Result.success(project.copy(id = projectId, isSynced = false))
         } catch (e: Exception) {
             Log.e("ProjectRepository", "Error creating project locally", e)
@@ -101,21 +95,6 @@ class ProjectRepository(
                                 }
                             }
                         }
-                        
-                        // Sync members
-                        project.members?.forEach { member ->
-                            createdProject.id?.let { projectId ->
-                                val memberResponse = projectService.addMemberToProject(
-                                    projectId,
-                                    mapOf("userId" to (member.id ?: 0L))
-                                )
-                                if (memberResponse.isSuccessful) {
-                                    userDao.updateUser(
-                                        UserEntity.fromUser(member.copy(isSynced = true))
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -145,10 +124,9 @@ class ProjectRepository(
                     // Insert new data
                     Log.d("ProjectRepository", "Inserting ${projects.size} projects into local database")
                     projects.forEach { project ->
-                        // Create a copy of the project with empty lists if tasks or members are null
+                        // Create a copy of the project with empty list if tasks is null
                         val projectWithDefaults = project.copy(
-                            tasks = project.tasks ?: emptyList(),
-                            members = project.members ?: emptyList()
+                            tasks = project.tasks ?: emptyList()
                         )
                         val projectEntity = ProjectEntity.fromProject(projectWithDefaults.copy(isSynced = true))
                         projectDao.insertProject(projectEntity)
@@ -156,11 +134,6 @@ class ProjectRepository(
                         projectWithDefaults.tasks.forEach { task ->
                             val taskEntity = TaskEntity.fromTask(task.copy(isSynced = true))
                             taskDao.insertTask(taskEntity)
-                        }
-                        
-                        projectWithDefaults.members.forEach { member ->
-                            val userEntity = UserEntity.fromUser(member.copy(isSynced = true))
-                            userDao.insertUser(userEntity)
                         }
                     }
                     Log.d("ProjectRepository", "Successfully refreshed projects")

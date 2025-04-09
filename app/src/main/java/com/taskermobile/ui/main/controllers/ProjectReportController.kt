@@ -109,6 +109,25 @@ class ProjectReportController(
             updateTask(task)
         }
     }
+
+    override fun updateTaskProgress(taskId: Long, manualProgress: Double) {
+        controllerScope.launch(Dispatchers.IO) {
+            try {
+                // Get task by ID
+                val task = taskDao.getTaskById(taskId)?.toTask()
+                
+                // If task exists, update its progress
+                if (task != null) {
+                    // Create a new task with updated progress instead of direct assignment
+                    val updatedTask = task.copy(manualProgress = manualProgress)
+                    updateTask(updatedTask)
+                }
+            } catch (e: Exception) {
+                // Handle any errors
+                e.printStackTrace()
+            }
+        }
+    }
 }
 
 sealed class ReportState {

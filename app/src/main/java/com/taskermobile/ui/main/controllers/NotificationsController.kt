@@ -19,7 +19,7 @@ class NotificationsController(
     fun fetchNotifications(onResult: (List<NotificationEntity>, Int) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // First show local notifications
+                // Show all local notifications
                 notificationRepository.getLocalNotifications().collectLatest { notifications ->
                     val unreadCount = notifications.count { !it.isRead }
                     withContext(Dispatchers.Main) {
@@ -37,17 +37,26 @@ class NotificationsController(
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val userId = sessionManager.userId.first() ?: return@launch
-                val result = notificationRepository.fetchNotifications(userId)
+                // Fetch only unread notifications from server
+                val result = notificationRepository.fetchUnreadNotifications(userId)
                 
                 if (result.isSuccess) {
-                    val notifications = result.getOrNull() ?: emptyList()
-                    val unreadCount = notifications.count { !it.isRead }
-                    withContext(Dispatchers.Main) {
-                        onResult(notifications, unreadCount)
+                    // After fetching unread, get all notifications to display
+                    notificationRepository.getLocalNotifications().first().let { allNotifications ->
+                        val unreadCount = allNotifications.count { !it.isRead }
+                        withContext(Dispatchers.Main) {
+                            onResult(allNotifications, unreadCount)
+                        }
                     }
                 } else {
-                    Log.e("NotificationsController", "Error refreshing notifications", result.exceptionOrNull())
-                    withContext(Dispatchers.Main) { onResult(emptyList(), 0) }
+                    Log.e("NotificationsController", "Error refreshing unread notifications", result.exceptionOrNull())
+                    // Still try to show local notifications on error
+                    notificationRepository.getLocalNotifications().first().let { allNotifications ->
+                        val unreadCount = allNotifications.count { !it.isRead }
+                        withContext(Dispatchers.Main) {
+                            onResult(allNotifications, unreadCount)
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("NotificationsController", "Error refreshing notifications", e)

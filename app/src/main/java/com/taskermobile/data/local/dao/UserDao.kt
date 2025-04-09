@@ -3,7 +3,6 @@ package com.taskermobile.data.local.dao
 import androidx.room.*
 import com.taskermobile.data.local.entity.UserEntity
 import com.taskermobile.data.local.entity.ProjectEntity
-import com.taskermobile.data.local.relations.ProjectMemberCrossRef
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -58,15 +57,5 @@ data class UserWithProjects(
         parentColumn = "id",
         entityColumn = "ownerId"
     )
-    val ownedProjects: List<ProjectEntity>,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = ProjectMemberCrossRef::class,
-            parentColumn = "userId",
-            entityColumn = "projectId"
-        )
-    )
-    val projects: List<ProjectEntity>
+    val ownedProjects: List<ProjectEntity>
 ) 

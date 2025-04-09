@@ -42,6 +42,12 @@ interface TaskService {
         @Body statusMap: Map<String, String>
     ): Response<Task>
 
+    @PATCH("/tasks/{taskId}/progress")
+    suspend fun updateTaskProgress(
+        @Path("taskId") taskId: Long,
+        @Body progressMap: Map<String, Double>
+    ): Response<Task>
+
     @GET("/tasks/assigned")
     suspend fun getAssignedTasks(
         @Query("projectId") projectId: Long? = null

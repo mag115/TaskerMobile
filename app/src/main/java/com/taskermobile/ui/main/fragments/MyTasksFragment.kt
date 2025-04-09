@@ -149,16 +149,40 @@ class MyTasksFragment : Fragment() {
                 binding.errorText.visibility = View.GONE
                 binding.myTasksRecyclerView.visibility = View.VISIBLE
 
-                //merge backend tasks w room images
+                //merge backend tasks w room images and ensure timer states are correct
                 CoroutineScope(Dispatchers.IO).launch {
                     val localTasksFlow = myTasksController.taskDao.getAllTasks()
                     val localTasks = localTasksFlow.first()
 
                     val mergedTasks = tasks.map { taskFromServer ->
                         val local = localTasks.find { it.id == taskFromServer.id }
+                        
+                        // Start with default task from server
+                        var mergedTask = taskFromServer
+                        
+                        // Copy image URI if exists locally
                         if (!local?.imageUri.isNullOrEmpty()) {
-                            taskFromServer.copy(imageUri = local?.imageUri)
-                        } else taskFromServer
+                            mergedTask = mergedTask.copy(imageUri = local?.imageUri)
+                        }
+                        
+                        // Check for tracking status
+                        if (mergedTask.isTracking && mergedTask.timerId != null) {
+                            // Calculate current elapsed time based on tracking start time
+                            val now = System.currentTimeMillis()
+                            val trackingStartTime = mergedTask.timerId ?: now
+                            val currentTimeElapsed = (now - trackingStartTime) / 1000
+                            
+                            // Update elapsed time if tracking
+                            if (currentTimeElapsed > 0) {
+                                mergedTask = mergedTask.copy(
+                                    timeSpent = mergedTask.timeSpent + currentTimeElapsed,
+                                    elapsedTime = mergedTask.timeSpent + currentTimeElapsed
+                                )
+                                Log.d("MyTasksFragment", "Updated tracking task ${mergedTask.id} elapsed time: ${mergedTask.timeSpent}s")
+                            }
+                        }
+                        
+                        mergedTask
                     }
 
                     withContext(Dispatchers.Main) {
@@ -166,7 +190,7 @@ class MyTasksFragment : Fragment() {
                     }
                 }
             }
-        }, refresh = false)
+        }, refresh = true)  // Set to true to ensure we always get fresh data
     }
 
 

@@ -84,4 +84,14 @@ class TaskController(context: Context, sessionManager: SessionManager, applicati
             return null
         }
     }
+
+    suspend fun updateTaskProgress(taskId: Long, manualProgress: Double) {
+        try {
+            Log.d("TaskController", "Updating task $taskId progress to $manualProgress%")
+            taskRepository.updateTaskProgress(taskId, manualProgress)
+        } catch (e: Exception) {
+            Log.e("TaskController", "Error updating task progress", e)
+            throw e
+        }
+    }
 }

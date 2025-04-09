@@ -3,7 +3,6 @@ package com.taskermobile.data.local.dao
 import androidx.room.*
 import com.taskermobile.data.local.entity.ProjectEntity
 import com.taskermobile.data.local.entity.UserEntity
-import com.taskermobile.data.local.relations.ProjectMemberCrossRef
 import com.taskermobile.data.local.relations.ProjectWithTasks
 import kotlinx.coroutines.flow.Flow
 
@@ -42,31 +41,4 @@ interface ProjectDao {
 
     @Update
     suspend fun updateProject(project: ProjectEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertProjectMember(crossRef: ProjectMemberCrossRef)
-
-    @Delete
-    suspend fun deleteProjectMember(crossRef: ProjectMemberCrossRef)
-
-    @Query("DELETE FROM project_member_cross_ref WHERE projectId = :projectId")
-    suspend fun deleteAllProjectMembers(projectId: Long)
-
-    @Transaction
-    @Query("SELECT * FROM projects WHERE id = :projectId")
-    suspend fun getProjectWithMembers(projectId: Long): ProjectWithMembers?
-}
-
-data class ProjectWithMembers(
-    @Embedded val project: ProjectEntity,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = ProjectMemberCrossRef::class,
-            parentColumn = "projectId",
-            entityColumn = "userId"
-        )
-    )
-    val members: List<UserEntity>
-) 
+} 

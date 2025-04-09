@@ -71,6 +71,31 @@ class TaskAdapter(
                 // Format deadline nicely
                 taskDeadline.text = formatDeadline(task.deadline)
                 
+                // Set up progress slider
+                val currentProgress = task.manualProgress?.toInt() ?: 0
+                progressSeekBar.progress = currentProgress
+                progressLabel.text = "Progress: $currentProgress%"
+                
+                progressSeekBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                        if (fromUser) {
+                            progressLabel.text = "Progress: $progress%"
+                        }
+                    }
+                    
+                    override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+                    
+                    override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {
+                        seekBar?.progress?.let { progress ->
+                            // Update task progress in the backend
+                            CoroutineScope(Dispatchers.IO).launch {
+                                taskActions.updateTaskProgress(task.id ?: 0L, progress.toDouble())
+                                Log.d(TAG, "Updated task ${task.id} progress to $progress%")
+                            }
+                        }
+                    }
+                })
+                
                 taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
                 updateTimerButton(task)
@@ -193,9 +218,15 @@ class TaskAdapter(
         private fun startTimer(task: Task) {
             if (!timerRunning) {
                 timerRunning = true
+                // Start with the current timeSpent value
                 elapsedTime = task.timeSpent.toLong()
                 t = elapsedTime
                 Log.d("TaskViewHolder", "Starting timer. Initial elapsedTime: $elapsedTime")
+
+                // Start tracking at the server level too
+                CoroutineScope(Dispatchers.IO).launch {
+                    taskActions.startTracking(task)
+                }
 
                 runnable = object : Runnable {
                     override fun run() {
@@ -203,6 +234,19 @@ class TaskAdapter(
                             elapsedTime++
                             binding.taskTimerLabel.text = formatTime(elapsedTime)
                             Log.d("TaskViewHolder", "Timer running. elapsedTime: $elapsedTime")
+                            
+                            // Update task's elapsed time
+                            task.elapsedTime = elapsedTime.toDouble()
+                            
+                            // Every 10 seconds, update the task in the repository to persist progress
+                            if (elapsedTime % 10L == 0L) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    task.timeSpent = elapsedTime.toDouble()
+                                    taskActions.updateTask(task)
+                                    Log.d("TaskViewHolder", "Persisted timer progress: $elapsedTime seconds")
+                                }
+                            }
+                            
                             handler.postDelayed(this, 1000)
                         }
                     }
@@ -215,16 +259,24 @@ class TaskAdapter(
         private fun stopTimer(task: Task) {
             timerRunning = false
             handler.removeCallbacks(runnable)
-            task.timeSpent += (elapsedTime - t)
-            task.elapsedTime = elapsedTime.toDouble()
-            binding.taskTimerLabel.text = formatTime(task.timeSpent.toLong())
+            
+            // Calculate final time spent
+            val finalTimeSpent = elapsedTime
+            
+            // Update task properties
+            task.timeSpent = finalTimeSpent.toDouble()
+            task.elapsedTime = finalTimeSpent.toDouble()
+            
+            // Update the UI
+            binding.taskTimerLabel.text = formatTime(finalTimeSpent)
 
+            // Persist the changes
             CoroutineScope(Dispatchers.IO).launch {
                 taskActions.stopTracking(task)
                 taskActions.updateTask(task)
+                Log.d("TaskViewHolder", "Timer stopped. Final time: $finalTimeSpent seconds")
             }
-
-            }
+        }
 
     private fun showFullImageDialog(imageUri: String) {
         val context = binding.root.context

@@ -13,6 +13,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE (projectId = :projectId OR :projectId = 0) AND (isDeleted IS NULL OR isDeleted = 0)")
     fun getTasksByProject(projectId: Long): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks ORDER BY id DESC LIMIT 1")
+    suspend fun getLastInsertedTask(): TaskEntity?
+
     @Query("DELETE FROM tasks WHERE projectId = :projectId")
     suspend fun deleteTasksByProject(projectId: Long)
 
@@ -32,11 +35,12 @@ interface TaskDao {
     suspend fun getTaskById(taskId: Long): TaskEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTask(task: TaskEntity) {
+    suspend fun insertTask(task: TaskEntity): Long {
         Log.d("TaskDao", "Inserting task: ${task.title} (ID: ${task.id})")
         try {
-            _insertTask(task)
-            Log.d("TaskDao", "Successfully inserted task: ${task.title}")
+            val id = _insertTask(task)
+            Log.d("TaskDao", "Successfully inserted task: ${task.title} with ID: $id")
+            return id
         } catch (e: Exception) {
             Log.e("TaskDao", "Failed to insert task: ${task.title}", e)
             throw e
@@ -44,7 +48,7 @@ interface TaskDao {
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun _insertTask(task: TaskEntity)
+    suspend fun _insertTask(task: TaskEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTasks(tasks: List<TaskEntity>) {
@@ -124,6 +128,9 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET imageUri = :imageUri WHERE id = :taskId")
     suspend fun updateImageUri(taskId: Long?, imageUri: String)
+
+    @Query("UPDATE tasks SET manualProgress = :manualProgress WHERE id = :taskId")
+    suspend fun updateTaskProgress(taskId: Long, manualProgress: Double)
 
     @Query("SELECT * FROM tasks")
     suspend fun getAllTasksSync(): List<TaskEntity> {

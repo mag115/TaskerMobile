@@ -17,9 +17,6 @@ data class Project(
     @SerializedName("tasks")
     val tasks: List<Task> = emptyList(),
 
-    @SerializedName("members")
-    val members: List<User> = emptyList(),
-
     @SerializedName("owner")
     val owner: User? = null,
 

@@ -7,7 +7,6 @@ import com.taskermobile.data.local.converter.Converters
 import com.taskermobile.data.local.converter.TaskListConverter
 import com.taskermobile.data.local.dao.*
 import com.taskermobile.data.local.entity.*
-import com.taskermobile.data.local.relations.ProjectMemberCrossRef
 import androidx.room.migration.Migration
 import android.util.Log
 
@@ -17,10 +16,9 @@ import android.util.Log
         TaskEntity::class,
         UserEntity::class,
         NotificationEntity::class,
-        ProjectReportEntity::class,
-        ProjectMemberCrossRef::class
+        ProjectReportEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 @TypeConverters(TaskListConverter::class, Converters::class)
