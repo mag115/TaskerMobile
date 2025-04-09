@@ -19,6 +19,10 @@ import com.taskermobile.ui.main.controllers.TaskActions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 
 class TaskAdapter(
     private val onTimerClick: (Task) -> Unit = {},
@@ -29,6 +33,12 @@ class TaskAdapter(
 
 
 ) : ListAdapter<Task, TaskAdapter.TaskViewHolder>(TaskDiffCallback()) {
+
+    companion object {
+        private const val TAG = "TaskAdapter"
+        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy")
+        private val DATETIME_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' h:mm a")
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val binding = ItemTaskBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -57,7 +67,10 @@ class TaskAdapter(
                 taskDescription.text = task.description
                 taskPriority.text = "Priority: ${task.priority}"
                 taskStatus.text = "Status: ${task.status}"
-                taskDeadline.text = "Deadline: ${task.deadline ?: "No deadline"}"
+                
+                // Format deadline nicely
+                taskDeadline.text = formatDeadline(task.deadline)
+                
                 taskTimerLabel.text = formatTime(task.timeSpent.toLong())
 
                 updateTimerButton(task)
@@ -124,6 +137,52 @@ class TaskAdapter(
 
                     override fun onNothingSelected(parent: AdapterView<*>) {}
                 }
+            }
+        }
+
+        private fun formatDeadline(deadlineStr: String?): String {
+            if (deadlineStr.isNullOrBlank()) {
+                return "Deadline: Not set"
+            }
+            
+            try {
+                // Parse the deadline string to LocalDateTime
+                val deadline = LocalDateTime.parse(deadlineStr)
+                val now = LocalDateTime.now()
+                
+                // Calculate days until deadline
+                val daysUntil = ChronoUnit.DAYS.between(now, deadline)
+                
+                return when {
+                    daysUntil < 0 -> {
+                        val daysAgo = Math.abs(daysUntil)
+                        "Deadline: ${deadline.format(DATE_FORMATTER)} (${daysAgo} ${if (daysAgo == 1L) "day" else "days"} overdue)"
+                    }
+                    daysUntil == 0L -> {
+                        val hoursUntil = ChronoUnit.HOURS.between(now, deadline)
+                        if (hoursUntil < 0) {
+                            "Deadline: Today (overdue)"
+                        } else if (hoursUntil == 0L) {
+                            val minutesUntil = ChronoUnit.MINUTES.between(now, deadline)
+                            if (minutesUntil <= 0) {
+                                "Deadline: Right now!"
+                            } else {
+                                "Deadline: Today (in $minutesUntil ${if (minutesUntil == 1L) "minute" else "minutes"})"
+                            }
+                        } else {
+                            "Deadline: Today (in $hoursUntil ${if (hoursUntil == 1L) "hour" else "hours"})"
+                        }
+                    }
+                    daysUntil == 1L -> "Deadline: Tomorrow (${deadline.format(DATE_FORMATTER)})"
+                    daysUntil < 7 -> "Deadline: In $daysUntil days (${deadline.format(DATE_FORMATTER)})"
+                    else -> "Deadline: ${deadline.format(DATE_FORMATTER)}"
+                }
+            } catch (e: DateTimeParseException) {
+                Log.e(TAG, "Error parsing deadline: $deadlineStr", e)
+                return "Deadline: $deadlineStr"
+            } catch (e: Exception) {
+                Log.e(TAG, "Error formatting deadline: $deadlineStr", e)
+                return "Deadline: $deadlineStr"
             }
         }
 

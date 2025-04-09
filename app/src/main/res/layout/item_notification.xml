@@ -27,14 +27,15 @@
             android:maxLines="2"
             android:ellipsize="end" />
 
-        <!-- Timestamp -->
+        <!-- Timestamp (hidden) -->
         <TextView
             android:id="@+id/notificationTimestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:textColor="@android:color/darker_gray"
-            android:layout_marginEnd="8dp" />
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
 
         <!-- Red Dot Indicator for Unread Notifications -->
         <View
@@ -43,7 +44,7 @@
             android:layout_height="12dp"
             android:background="@android:color/holo_red_light"
             android:visibility="gone"
-            android:layout_marginStart="10dp" />
+            android:layout_marginStart="4dp" />
 
     </LinearLayout>
 
